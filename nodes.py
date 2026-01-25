@@ -200,17 +200,17 @@ class Qwen3TTSVoiceClone:
         print(f"DEBUG: VoiceClone input waveform shape: {waveform.shape}, sr: {sr}")
         w_np = waveform.cpu().numpy()
         if w_np.ndim == 3: w_np = w_np[0] 
-        # w_np is [channels, samples] from ComfyUI usually? 
-        # Wait, ComfyUI LoadAudio gives [batch, length, channels] or [batch, channels, length]?
-        # Documentation usually: [batch, samples, channels] for SaveAudio input.
-        # But let's check input shape carefully.
-        # Standard torchaudio load is [channels, samples]. 
-        # ComfyUI often does [batch, samples, channels].
-        # If I want to be safe, I should check dimensions.
         
-        # If channels is the last dim and > 1, mix down.
-        if w_np.ndim > 1 and w_np.shape[-1] > 1: # Stereo or more
-             w_np = np.mean(w_np, axis=-1) # [samples]
+        # w_np is now likely [channels, samples] (e.g. [2, 272319]) or [samples, channels]
+        # Heuristic: Audio is usually longer than it is wide (channels)
+        if w_np.ndim == 2:
+            if w_np.shape[0] < w_np.shape[1]: 
+                # Shape is [channels, samples], e.g. [2, 48000]
+                # transpose to [samples, channels] for consistency or just average axis 0
+                w_np = np.mean(w_np, axis=0)
+            else:
+                # Shape is [samples, channels], e.g. [48000, 2]
+                w_np = np.mean(w_np, axis=1)
         
         # Ensure it's 1D array for mono
         if w_np.ndim > 1:
