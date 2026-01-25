@@ -74,5 +74,10 @@ ComfyUI/models/qwen3_tts/
 2.  **Flash Attention**：如果你使用 NVIDIA 显卡，建议安装 `flash-attn` 库以获得更快的推理速度。
 3.  **模型匹配**：**切勿**将 `Base` 模型连接到 `CustomVoice` 节点，或者将 `CustomVoice` 模型连接到 `VoiceDesign` 节点，这会导致报错。请确保 Loader 和 Generator 类型一致。
 
-## 示例 (Example)
-项目根目录下包含 `qwen3_tts_example_workflow.json`，您可以直接拖入 ComfyUI 查看所有节点的连接方式。
+## 示例 (Examples)
+项目根目录下的 `examples/` 文件夹中包含以下工作流：
+
+1.  `examples/qwen3_tts_example_workflow.json`：包含基础功能的示例。
+2.  `examples/qwen3_tts_design_then_clone.json`：进阶示例，展示如何先设计声音再进行克隆。
+
+您可以直接将 JSON 文件拖入 ComfyUI 界面即可加载。
