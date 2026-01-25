@@ -164,14 +164,10 @@ class Qwen3TTSVoiceDesign:
 class Qwen3TTSVoiceClone:
     @classmethod
     def INPUT_TYPES(s):
-        input_dir = folder_paths.get_input_directory()
-        files = [f for f in os.listdir(input_dir) if os.path.isfile(os.path.join(input_dir, f))]
-        # Simplify filter, most audio exts supported by ffmpeg/libs
-        audio_files = [f for f in files if f.lower().endswith(('.wav', '.mp3', '.ogg', '.flac', '.m4a'))]
-        
         return {
             "required": {
                 "model": ("QWEN3_TTS_MODEL",),
+                "ref_audio": ("AUDIO",),
                 "text": ("STRING", {"multiline": True, "default": "Hello, how are you today?"}),
                 "language": (
                     ["Auto", "Chinese", "English", "Japanese", "Korean", "German", "French", "Russian", "Portuguese", "Spanish", "Italian"],
@@ -179,8 +175,6 @@ class Qwen3TTSVoiceClone:
                 ),
             },
             "optional": {
-                "ref_audio_input": ("AUDIO",),
-                "ref_audio_path": (sorted(audio_files), {"audio_upload": True}),
                 "ref_text": ("STRING", {"multiline": True, "default": ""}),
                 "x_vector_only": ("BOOLEAN", {"default": False}),
                 "top_p": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 1.0, "step": 0.01}),
@@ -193,43 +187,27 @@ class Qwen3TTSVoiceClone:
     FUNCTION = "generate"
     CATEGORY = "Qwen3TTS"
 
-    def generate(self, model, text, language, ref_audio_input=None, ref_audio_path="", ref_text="", x_vector_only=False, top_p=1.0, temperature=0.9, repetition_penalty=1.05):
+    def generate(self, model, ref_audio, text, language, ref_text="", x_vector_only=False, top_p=1.0, temperature=0.9, repetition_penalty=1.05):
         if model.model.tts_model_type != "base":
              raise ValueError(f"Loaded model is type '{model.model.tts_model_type}', but 'base' is required for Voice Clone.")
 
         target_lang = None if language == "Auto" else language
         
-        # Prepare reference audio
-        ref_audio = None
-        if ref_audio_input is not None:
-             # ComfyUI AUDIO: {"waveform": tensor [batch, channels, samples], "sample_rate": int}
-             waveform = ref_audio_input["waveform"]
-             sr = ref_audio_input["sample_rate"]
-             w_np = waveform.cpu().numpy()
-             if w_np.ndim == 3: w_np = w_np[0] 
-             if w_np.shape[0] < w_np.shape[1]: w_np = w_np.transpose() # [samples, channels]
-             ref_audio = (w_np, sr)
-        else:
-            # Check input directory for the file
-            input_dir = folder_paths.get_input_directory()
-            if ref_audio_path and os.path.exists(os.path.join(input_dir, ref_audio_path)):
-                 ref_audio = os.path.join(input_dir, ref_audio_path)
-            elif ref_audio_path and os.path.exists(ref_audio_path): # Fallback if absolute path somehow passed (unlikely with widget but good for safety)
-                 ref_audio = ref_audio_path
-        
-        if not ref_audio:
-            # If empty string or file not found
-            if not ref_audio_path:
-                 raise ValueError("Reference audio is required. Please upload an audio file to ComfyUI input directory and select it, or connect AUDIO input.")
-            else:
-                 raise ValueError(f"Could not find reference audio file: {ref_audio_path}")
+        # Prepare reference audio from AUDIO input
+        # ComfyUI AUDIO: {"waveform": tensor [batch, channels, samples], "sample_rate": int}
+        waveform = ref_audio["waveform"]
+        sr = ref_audio["sample_rate"]
+        w_np = waveform.cpu().numpy()
+        if w_np.ndim == 3: w_np = w_np[0] 
+        if w_np.shape[0] < w_np.shape[1]: w_np = w_np.transpose() # [samples, channels]
+        ref_audio_processed = (w_np, sr)
 
         print(f"Generating VoiceClone: {text[:50]}...")
         
         wavs, output_sr = model.generate_voice_clone(
             text=text,
             language=target_lang,
-            ref_audio=ref_audio,
+            ref_audio=ref_audio_processed,
             ref_text=ref_text if ref_text else None,
             x_vector_only_mode=x_vector_only,
             top_p=top_p,
