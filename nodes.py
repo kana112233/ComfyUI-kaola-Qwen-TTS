@@ -199,7 +199,22 @@ class Qwen3TTSVoiceClone:
         sr = ref_audio["sample_rate"]
         w_np = waveform.cpu().numpy()
         if w_np.ndim == 3: w_np = w_np[0] 
-        if w_np.shape[0] < w_np.shape[1]: w_np = w_np.transpose() # [samples, channels]
+        # w_np is [channels, samples] from ComfyUI usually? 
+        # Wait, ComfyUI LoadAudio gives [batch, length, channels] or [batch, channels, length]?
+        # Documentation usually: [batch, samples, channels] for SaveAudio input.
+        # But let's check input shape carefully.
+        # Standard torchaudio load is [channels, samples]. 
+        # ComfyUI often does [batch, samples, channels].
+        # If I want to be safe, I should check dimensions.
+        
+        # If channels is the last dim and > 1, mix down.
+        if w_np.ndim > 1 and w_np.shape[-1] > 1: # Stereo or more
+             w_np = np.mean(w_np, axis=-1) # [samples]
+        
+        # Ensure it's 1D array for mono
+        if w_np.ndim > 1:
+            w_np = w_np.flatten()
+            
         ref_audio_processed = (w_np, sr)
 
         print(f"Generating VoiceClone: {text[:50]}...")
