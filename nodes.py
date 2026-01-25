@@ -197,6 +197,7 @@ class Qwen3TTSVoiceClone:
         # ComfyUI AUDIO: {"waveform": tensor [batch, channels, samples], "sample_rate": int}
         waveform = ref_audio["waveform"]
         sr = ref_audio["sample_rate"]
+        print(f"DEBUG: VoiceClone input waveform shape: {waveform.shape}, sr: {sr}")
         w_np = waveform.cpu().numpy()
         if w_np.ndim == 3: w_np = w_np[0] 
         # w_np is [channels, samples] from ComfyUI usually? 
@@ -214,6 +215,12 @@ class Qwen3TTSVoiceClone:
         # Ensure it's 1D array for mono
         if w_np.ndim > 1:
             w_np = w_np.flatten()
+            
+        # Check for minimum length (e.g. 0.5 seconds worth of samples, or at least enough for padding)
+        # Pad 384 means at least that many samples.
+        if w_np.shape[0] < 400: # Very permissive minimum
+            raise ValueError(f"Reference audio is too short! Got {w_np.shape[0]} samples. Please provide a longer audio clip (at least 1 second recommended).")
+
             
         ref_audio_processed = (w_np, sr)
 
