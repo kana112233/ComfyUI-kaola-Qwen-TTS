@@ -180,7 +180,7 @@ class Qwen3TTSVoiceClone:
             },
             "optional": {
                 "ref_audio_input": ("AUDIO",),
-                "ref_audio_path": (sorted(audio_files), ),
+                "ref_audio_path": (sorted(audio_files), {"audio_upload": True}),
                 "ref_text": ("STRING", {"multiline": True, "default": ""}),
                 "x_vector_only": ("BOOLEAN", {"default": False}),
                 "top_p": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 1.0, "step": 0.01}),
