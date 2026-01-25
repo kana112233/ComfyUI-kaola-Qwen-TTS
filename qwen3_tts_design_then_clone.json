@@ -163,7 +163,7 @@
                     "link": 4
                 },
                 {
-                    "name": "ref_audio_input",
+                    "name": "ref_audio",
                     "type": "AUDIO",
                     "link": 11
                 }
@@ -181,7 +181,6 @@
             "widgets_values": [
                 "Now I can speak any text using the wise wizard voice I just designed, and it will stay consistent!",
                 "Auto",
-                "",
                 "This is the reference voice I am designing. It should sound like a wise old wizard.",
                 false,
                 1.0,
