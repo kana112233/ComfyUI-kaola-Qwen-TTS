@@ -91,6 +91,7 @@ class Qwen3TTSCustomVoice:
                 "top_p": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 1.0, "step": 0.01}),
                 "temperature": ("FLOAT", {"default": 0.7, "min": 0.0, "max": 2.0, "step": 0.01}),
                 "repetition_penalty": ("FLOAT", {"default": 1.05, "min": 0.0, "max": 2.0, "step": 0.01}),
+                "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff}),
             }
         }
     
@@ -98,9 +99,12 @@ class Qwen3TTSCustomVoice:
     FUNCTION = "generate"
     CATEGORY = "Qwen3TTS"
 
-    def generate(self, model, text, speaker, language, instruct="", top_p=1.0, temperature=0.9, repetition_penalty=1.05):
+    def generate(self, model, text, speaker, language, instruct="", top_p=1.0, temperature=0.9, repetition_penalty=1.05, max_new_tokens=2048, top_k=50, do_sample=True, enable_text_normalization=True, seed=0):
         if model.model.tts_model_type != "custom_voice":
              raise ValueError(f"Loaded model is type '{model.model.tts_model_type}', but 'custom_voice' is required for this node.")
+
+        if seed is not None:
+            torch.manual_seed(seed)
 
         target_lang = None if language == "Auto" else language
         
@@ -113,7 +117,11 @@ class Qwen3TTSCustomVoice:
             instruct=instruct if instruct else None,
             top_p=top_p,
             temperature=temperature,
-            repetition_penalty=repetition_penalty
+            repetition_penalty=repetition_penalty,
+            max_new_tokens=max_new_tokens,
+            top_k=top_k,
+            do_sample=do_sample,
+            enable_text_normalization=enable_text_normalization,
         )
         
         return (process_waves_to_audio(wavs, output_sr),)
@@ -135,6 +143,7 @@ class Qwen3TTSVoiceDesign:
                 "top_p": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 1.0, "step": 0.01}),
                 "temperature": ("FLOAT", {"default": 0.7, "min": 0.0, "max": 2.0, "step": 0.01}),
                 "repetition_penalty": ("FLOAT", {"default": 1.05, "min": 0.0, "max": 2.0, "step": 0.01}),
+                "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff}),
             }
         }
     
@@ -142,9 +151,12 @@ class Qwen3TTSVoiceDesign:
     FUNCTION = "generate"
     CATEGORY = "Qwen3TTS"
 
-    def generate(self, model, text, instruct, language, top_p=1.0, temperature=0.9, repetition_penalty=1.05):
+    def generate(self, model, text, instruct, language, top_p=1.0, temperature=0.9, repetition_penalty=1.05, max_new_tokens=2048, top_k=50, do_sample=True, enable_text_normalization=True, seed=0):
         if model.model.tts_model_type != "voice_design":
              raise ValueError(f"Loaded model is type '{model.model.tts_model_type}', but 'voice_design' is required for this node.")
+
+        if seed is not None:
+            torch.manual_seed(seed)
 
         target_lang = None if language == "Auto" else language
         
@@ -156,7 +168,11 @@ class Qwen3TTSVoiceDesign:
             instruct=instruct,
             top_p=top_p,
             temperature=temperature,
-            repetition_penalty=repetition_penalty
+            repetition_penalty=repetition_penalty,
+            max_new_tokens=max_new_tokens,
+            top_k=top_k,
+            do_sample=do_sample,
+            enable_text_normalization=enable_text_normalization,
         )
         
         return (process_waves_to_audio(wavs, output_sr),)
@@ -180,6 +196,7 @@ class Qwen3TTSVoiceClone:
                 "top_p": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 1.0, "step": 0.01}),
                 "temperature": ("FLOAT", {"default": 0.7, "min": 0.0, "max": 2.0, "step": 0.01}),
                 "repetition_penalty": ("FLOAT", {"default": 1.05, "min": 0.0, "max": 2.0, "step": 0.01}),
+                "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff}),
             }
         }
     
@@ -187,9 +204,12 @@ class Qwen3TTSVoiceClone:
     FUNCTION = "generate"
     CATEGORY = "Qwen3TTS"
 
-    def generate(self, model, ref_audio, text, language, ref_text="", x_vector_only=False, top_p=1.0, temperature=0.9, repetition_penalty=1.05):
+    def generate(self, model, ref_audio, text, language, ref_text="", x_vector_only=False, top_p=1.0, temperature=0.9, repetition_penalty=1.05, max_new_tokens=2048, top_k=50, do_sample=True, enable_text_normalization=True, seed=0):
         if model.model.tts_model_type != "base":
              raise ValueError(f"Loaded model is type '{model.model.tts_model_type}', but 'base' is required for Voice Clone.")
+
+        if seed is not None:
+             torch.manual_seed(seed)
 
         target_lang = None if language == "Auto" else language
         
@@ -234,7 +254,11 @@ class Qwen3TTSVoiceClone:
             x_vector_only_mode=x_vector_only,
             top_p=top_p,
             temperature=temperature,
-            repetition_penalty=repetition_penalty
+            repetition_penalty=repetition_penalty,
+            max_new_tokens=max_new_tokens,
+            top_k=top_k,
+            do_sample=do_sample,
+            enable_text_normalization=enable_text_normalization,
         )
         
         return (process_waves_to_audio(wavs, output_sr),)
