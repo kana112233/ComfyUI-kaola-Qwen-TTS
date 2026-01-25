@@ -1,0 +1,11 @@
+
+__pycache__/
+*.pyc
+*.egg-info/
+dist/
+build/
+.DS_Store
+.idea/
+.vscode/
+# Ignore models if they are downloaded locally into this dir by mistake (though instructions say ComfyUI/models)
+models/
