@@ -24,6 +24,7 @@ class Qwen3TTSLoader:
                     {"default": "Qwen/Qwen3-TTS-12Hz-1.7B-CustomVoice"}
                 ),
                 "precision": (["bf16", "fp16", "fp32"], {"default": "bf16"}),
+                "device": (["auto", "cuda", "cpu", "mps"], {"default": "auto"}),
             }
         }
     
@@ -32,14 +33,14 @@ class Qwen3TTSLoader:
     FUNCTION = "load_model"
     CATEGORY = "Qwen3TTS"
 
-    def load_model(self, model_id, precision):
+    def load_model(self, model_id, precision, device="auto"):
         dtype = torch.float32
         if precision == "bf16":
             dtype = torch.bfloat16
         elif precision == "fp16":
             dtype = torch.float16
 
-        print(f"Loading Qwen3-TTS model: {model_id} with precision {precision}")
+        print(f"Loading Qwen3-TTS model: {model_id} with precision {precision} on device {device}")
         
         local_path = os.path.join(folder_paths.models_dir, "qwen3_tts", model_id.split("/")[-1])
         model_name_or_path = model_id
@@ -49,7 +50,7 @@ class Qwen3TTSLoader:
         
         # Determine attention implementation
         attn_impl = "sdpa" # Default safe fallback
-        if torch.cuda.is_available():
+        if torch.cuda.is_available() and (device == "auto" or device == "cuda"):
             try:
                 import flash_attn
                 attn_impl = "flash_attention_2"
@@ -58,7 +59,7 @@ class Qwen3TTSLoader:
 
         model = Qwen3TTSModel.from_pretrained(
             model_name_or_path,
-            device_map="auto",
+            device_map=device,
             dtype=dtype,
             attn_implementation=attn_impl, 
         )
