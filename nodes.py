@@ -422,9 +422,6 @@ class Qwen3TTSStageManager:
         def get_tensor_props(t):
             return t.shape[1], t.shape[2] 
 
-        import torchaudio
-        import os
-
         valid_line_count = 0
         
         # Prepare Audio for Cloning
