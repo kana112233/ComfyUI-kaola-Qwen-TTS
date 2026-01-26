@@ -290,17 +290,17 @@ class Qwen3TTSStageManager:
     def INPUT_TYPES(s):
         return {
             "required": {
-                "model": ("QWEN3_TTS_MODEL",),
                 "script": ("STRING", {"multiline": True, "default": "Narrator: (Calm) The adventure begins.\nHero: (Bold) Let's go!"}),
                 "role_definitions": ("STRING", {"multiline": True, "default": "Narrator [A]: A clear, neutral voice.\nHero [B]: A brave, young voice."}),
                 "my_turn_interval": ("FLOAT", {"default": 0.5, "min": 0.0, "max": 5.0, "step": 0.1}),
             },
             "optional": {
+                "model": ("QWEN3_TTS_MODEL",),
+                "clone_model": ("QWEN3_TTS_MODEL",),
                 "save_to_file": ("BOOLEAN", {"default": False, "label_on": "Save Tracks"}),
                 "filename_prefix": ("STRING", {"default": "stage_manager"}),
             },
             "optional": {
-                "clone_model": ("QWEN3_TTS_MODEL",),
                 "role_A_audio": ("AUDIO",),
                 "role_B_audio": ("AUDIO",),
                 "role_C_audio": ("AUDIO",),
@@ -316,14 +316,18 @@ class Qwen3TTSStageManager:
     FUNCTION = "generate_scene"
     CATEGORY = "Qwen3TTS"
 
-    def generate_scene(self, model, script, role_definitions, my_turn_interval=0.5, 
+    def generate_scene(self, script, role_definitions, my_turn_interval=0.5, 
+                       model=None, clone_model=None,
                        save_to_file=False, filename_prefix="stage_manager", 
-                       clone_model=None, 
                        role_A_audio=None, role_B_audio=None, role_C_audio=None, 
                        role_D_audio=None, role_E_audio=None, role_F_audio=None, role_G_audio=None):
         
         # Validation checks
-        if model.model.tts_model_type != "voice_design":
+        if model is None and clone_model is None:
+             raise ValueError("Stage Manager needs at least one model! Connect either 'model' (for creation) or 'clone_model' (for cloning).")
+
+        if model is not None and model.model.tts_model_type != "voice_design":
+             # Warn but don't crash? Or crashing is safer.
              raise ValueError(f"Stage Manager 'model' input requires a 'voice_design' model, but loaded '{model.model.tts_model_type}'.")
         
         has_clone_model = False
@@ -508,6 +512,9 @@ class Qwen3TTSStageManager:
                 )
             else:
                 # Design Mode
+                if model is None:
+                    raise ValueError(f"Role '{role_name}' requires Voice Creation (Design Mode), but no 'model' (VoiceDesign) is connected to the StageManager. Please connect a Qwen3-VoiceDesign model or provide audio input for this role.")
+
                 print(f"Generating Line {valid_line_count+1} [DESIGN]: {role_name}")
                 voice_desc = role_data["desc"]
                 if emotion: instruct = f"{emotion.strip()}, {voice_desc}"
