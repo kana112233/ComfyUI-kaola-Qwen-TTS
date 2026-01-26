@@ -285,6 +285,26 @@ def process_waves_to_audio(wavs, output_sr):
         return {"waveform": final_tensor, "sample_rate": output_sr}
     return None
 
+class Qwen3TTSRefAudio:
+    @classmethod
+    def INPUT_TYPES(s):
+        return {
+            "required": {
+                "audio": ("AUDIO",),
+                "text": ("STRING", {"multiline": True, "default": "The transcript of the audio."}),
+            }
+        }
+    
+    RETURN_TYPES = ("AUDIO",)
+    FUNCTION = "wrap_audio"
+    CATEGORY = "Qwen3TTS"
+
+    def wrap_audio(self, audio, text):
+        # Create a shallow copy to avoid mutating the original dict if it's reused
+        new_audio = audio.copy()
+        new_audio["text"] = text
+        return (new_audio,)
+
 class Qwen3TTSStageManager:
     @classmethod
     def INPUT_TYPES(s):
@@ -476,7 +496,19 @@ class Qwen3TTSStageManager:
             
             if role_data.get("audio_input") is not None:
                 is_clone_mode = True
-                ref_audio_obj = process_ref_audio(role_data["audio_input"])
+                audio_input_data = role_data["audio_input"]
+                ref_audio_obj = process_ref_audio(audio_input_data)
+                
+                # Check for bundled text (from Qwen3TTSRefAudio node)
+                if "text" in audio_input_data and audio_input_data["text"]:
+                    ref_text_obj = audio_input_data["text"]
+                    x_vector = False
+                    print(f"Role {role_name}: Found ref_text in Audio input. Using ICL Mode.")
+                else:
+                    ref_text_obj = None
+                    x_vector = True
+                    print(f"Role {role_name}: No ref_text in Audio input. Using X-Vector Mode.")
+                    
             elif role_data.get("is_file", False):
                 is_clone_mode = True
                 # Load from file
@@ -484,10 +516,14 @@ class Qwen3TTSStageManager:
                 try:
                     w, sr = torchaudio.load(fpath)
                     # Convert to Qwen format
-                    # torchaudio load returns [C, L] tensor
                     w_np = w.numpy()
                     if w_np.ndim == 2: w_np = np.mean(w_np, axis=0)
                     ref_audio_obj = (w_np, sr)
+                    
+                    # File loading doesn't support text yet
+                    ref_text_obj = None
+                    x_vector = True 
+
                 except Exception as e:
                     print(f"Failed to load audio file {fpath}: {e}. Falling back to Design.")
                     is_clone_mode = False
@@ -506,8 +542,8 @@ class Qwen3TTSStageManager:
                     text=content,
                     language="Auto",
                     ref_audio=ref_audio_obj,
-                    ref_text=None,
-                    x_vector_only_mode=True, # No ref_text available in StageManager, so must use x-vector
+                    ref_text=ref_text_obj,
+                    x_vector_only_mode=x_vector,
                     do_sample=True
                 )
             else:
@@ -642,6 +678,7 @@ NODE_CLASS_MAPPINGS = {
     "Qwen3TTSVoiceDesign": Qwen3TTSVoiceDesign,
     "Qwen3TTSVoiceClone": Qwen3TTSVoiceClone,
     "Qwen3TTSStageManager": Qwen3TTSStageManager,
+    "Qwen3TTSRefAudio": Qwen3TTSRefAudio,
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
@@ -650,4 +687,5 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "Qwen3TTSVoiceDesign": "Qwen3 TTS Voice Design",
     "Qwen3TTSVoiceClone": "Qwen3 TTS Voice Clone",
     "Qwen3TTSStageManager": "Qwen3 TTS Stage Manager 🎬",
+    "Qwen3TTSRefAudio": "Qwen3 TTS Ref Audio (Audio+Text)",
 }
