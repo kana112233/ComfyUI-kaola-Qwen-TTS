@@ -310,7 +310,7 @@ class Qwen3TTSStageManager:
     def INPUT_TYPES(s):
         return {
             "required": {
-                "script": ("STRING", {"multiline": True, "default": "Narrator: (Calm) The adventure begins.\nHero: (Bold) Let's go!"}),
+                "script": ("STRING", {"multiline": True, "default": "Narrator: The adventure begins.\nHero: Let's go!"}),
                 "role_definitions": ("STRING", {"multiline": True, "default": "Narrator [A]: A clear, neutral voice.\nHero [B]: A brave, young voice."}),
                 "my_turn_interval": ("FLOAT", {"default": 0.5, "min": 0.0, "max": 5.0, "step": 0.1}),
             },
