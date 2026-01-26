@@ -4,6 +4,8 @@ import torch
 import numpy as np
 import folder_paths
 from qwen_tts import Qwen3TTSModel
+import re
+import torchaudio
 
 # Add Qwen3-TTS related paths
 folder_paths.add_model_folder_path("qwen3_tts", os.path.join(folder_paths.models_dir, "qwen3_tts"))
@@ -282,3 +284,345 @@ def process_waves_to_audio(wavs, output_sr):
         final_tensor = torch.cat(audio_tensors, dim=0)
         return {"waveform": final_tensor, "sample_rate": output_sr}
     return None
+
+class Qwen3TTSStageManager:
+    @classmethod
+    def INPUT_TYPES(s):
+        return {
+            "required": {
+                "model": ("QWEN3_TTS_MODEL",),
+                "script": ("STRING", {"multiline": True, "default": "Narrator: (Calm) The adventure begins.\nHero: (Bold) Let's go!"}),
+                "role_definitions": ("STRING", {"multiline": True, "default": "Narrator: A clear, neutral voice.\nHero: A brave, young voice."}),
+                "role_A_name": ("STRING", {"default": "Narrator"}),
+                "role_A_desc": ("STRING", {"multiline": True, "default": "A clear, neutral narrator voice."}),
+                "my_turn_interval": ("FLOAT", {"default": 0.5, "min": 0.0, "max": 5.0, "step": 0.1}),
+            },
+            "optional": {
+                "role_B_name": ("STRING", {"default": "Hero"}),
+                "role_B_desc": ("STRING", {"multiline": True, "default": "A young, determined hero."}),
+                "role_C_name": ("STRING", {"default": "Villain"}),
+                "role_C_desc": ("STRING", {"multiline": True, "default": "A raspy, evil villain."}),
+                "save_to_file": ("BOOLEAN", {"default": False, "label_on": "Save Tracks"}),
+                "filename_prefix": ("STRING", {"default": "stage_manager"}),
+            },
+            "optional": {
+                "clone_model": ("QWEN3_TTS_MODEL",),
+                "role_A_audio": ("AUDIO",),
+                "role_B_audio": ("AUDIO",),
+                "role_C_audio": ("AUDIO",),
+                "role_D_audio": ("AUDIO",),
+                "role_E_audio": ("AUDIO",),
+                "role_F_audio": ("AUDIO",),
+                "role_G_audio": ("AUDIO",),
+            }
+        }
+    
+    RETURN_TYPES = ("AUDIO", "AUDIO", "AUDIO", "AUDIO", "STRING",)
+    RETURN_NAMES = ("audio_mix", "audio_role_A/0", "audio_role_B/1", "audio_role_C/2", "srt_content",)
+    FUNCTION = "generate_scene"
+    CATEGORY = "Qwen3TTS"
+
+    def generate_scene(self, model, script, role_definitions, role_A_name, role_A_desc, my_turn_interval=0.5, 
+                       save_to_file=False, filename_prefix="stage_manager", 
+                       role_B_name=None, role_B_desc=None, role_C_name=None, role_C_desc=None,
+                       clone_model=None, 
+                       role_A_audio=None, role_B_audio=None, role_C_audio=None, 
+                       role_D_audio=None, role_E_audio=None, role_F_audio=None, role_G_audio=None):
+        
+        # Validation checks
+        if model.model.tts_model_type != "voice_design":
+             raise ValueError(f"Stage Manager 'model' input requires a 'voice_design' model, but loaded '{model.model.tts_model_type}'.")
+        
+        has_clone_model = False
+        if clone_model is not None:
+             has_clone_model = True
+
+        # Config map
+        roles_config = {}
+        
+        # 1. Parse Static Inputs (Legacy/Quick Start)
+        if role_A_name: roles_config[role_A_name] = {"desc": role_A_desc, "static_id": "A", "audio_input": role_A_audio}
+        if role_B_name and role_B_desc: roles_config[role_B_name] = {"desc": role_B_desc, "static_id": "B", "audio_input": role_B_audio}
+        if role_C_name and role_C_desc: roles_config[role_C_name] = {"desc": role_C_desc, "static_id": "C", "audio_input": role_C_audio}
+        
+        # Store other audio slots for dynamic assignment mapping
+        # Map: Slot Index -> Audio Input
+        extra_audio_slots = [role_D_audio, role_E_audio, role_F_audio, role_G_audio]
+        
+        
+        # 2. Parse Dedicated Role Definitions
+        def_lines = role_definitions.strip().split('\n')
+        def_pattern = re.compile(r"^(.+?)\s*[:：]\s*(.+)$")
+        
+        extra_slot_idx = 0
+        
+        for line in def_lines:
+            line = line.strip()
+            if not line: continue
+            
+            match = def_pattern.match(line)
+            if match:
+                r_name = match.group(1).strip()
+                r_desc = match.group(2).strip()
+                
+                # Check if it's a file path
+                possible_path = r_desc.strip('"').strip("'")
+                is_file = os.path.isfile(possible_path)
+                
+                # Check if this role matches a static input A, B, or C
+                existing_role = roles_config.get(r_name)
+                
+                # Determine audio input
+                role_audio_input = None
+                
+                if existing_role:
+                    # Already has config (from A/B/C), keep its audio input if present
+                    role_audio_input = existing_role.get("audio_input")
+                    roles_config[r_name]["desc"] = r_desc # Text override
+                    roles_config[r_name]["is_file"] = is_file
+                else:
+                    # New role. Check if we have spare audio slots to auto-assign
+                    if extra_slot_idx < len(extra_audio_slots):
+                        role_audio_input = extra_audio_slots[extra_slot_idx]
+                        if role_audio_input is not None:
+                             # This role gets the next available audio slot (D, E, F, G)
+                             # Logic: User connects "Role D" audio. The FIRST defined role that isn't A/B/C gets it.
+                             pass
+                        extra_slot_idx += 1
+                    
+                    roles_config[r_name] = {"desc": r_desc, "static_id": None, "audio_input": role_audio_input, "is_file": is_file}
+                
+                # Note: "static_id" is only for fixed OUTPUTS A/B/C.
+                
+                current_audio = "Input" if role_audio_input is not None else ("File" if is_file else "None")
+                print(f"Role Configured: {r_name} -> {r_desc} (Audio: {current_audio})")
+
+        # 3. Parse Script
+        script_lines = script.strip().split('\n')
+
+        # Dynamic Timelines
+        timelines = {}
+        for r_name in roles_config:
+            timelines[r_name] = []
+            
+        sample_rate = 24000 
+        srt_lines = []
+        current_time_seconds = 0.0
+        
+        pattern = re.compile(r"^(.+?)[:：](?:\s*[(\uff08](.+?)[)\uff09])?\s*(.+)$")
+
+        def format_timestamp(seconds):
+            millis = int((seconds % 1) * 1000)
+            seconds = int(seconds)
+            hours = seconds // 3600
+            minutes = (seconds % 3600) // 60
+            seconds = seconds % 60
+            return f"{hours:02d}:{minutes:02d}:{seconds:02d},{millis:03d}"
+            
+        def get_tensor_props(t):
+            return t.shape[1], t.shape[2] 
+
+        import torchaudio
+        import os
+
+        valid_line_count = 0
+        
+        # Prepare Audio for Cloning
+        def process_ref_audio(audio_data):
+            # Returns tuple (numpy_wave, sr) suitable for Qwen
+            # audio_data is users dictionary {"waveform":..., "sample_rate":...}
+            waveform = audio_data["waveform"]
+            sr = audio_data["sample_rate"]
+            w_np = waveform.cpu().numpy()
+            if w_np.ndim == 3: w_np = w_np[0]
+            if w_np.ndim == 2:
+                if w_np.shape[0] < w_np.shape[1]: w_np = np.mean(w_np, axis=0)
+                else: w_np = np.mean(w_np, axis=1)
+            if w_np.ndim > 1: w_np = w_np.flatten()
+            return (w_np, sr)
+
+        for i, line in enumerate(script_lines):
+            line = line.strip()
+            if not line: continue
+            
+            match = pattern.match(line)
+            if not match: continue
+                
+            role_name = match.group(1).strip()
+            emotion = match.group(2)
+            content = match.group(3).strip()
+            
+            active_role_key = None
+            for r_key in roles_config:
+                if r_key.lower() == role_name.lower():
+                    active_role_key = r_key
+                    break
+            
+            if not active_role_key:
+                print(f"Role '{role_name}' not defined. Skipping.")
+                continue
+                
+            role_data = roles_config[active_role_key]
+            
+            # Determine Mode: Clone vs Design
+            # Clone if: Audio Input Present OR Description is File Path
+            is_clone_mode = False
+            ref_audio_obj = None
+            
+            if role_data.get("audio_input") is not None:
+                is_clone_mode = True
+                ref_audio_obj = process_ref_audio(role_data["audio_input"])
+            elif role_data.get("is_file", False):
+                is_clone_mode = True
+                # Load from file
+                fpath = role_data["desc"].strip('"').strip("'")
+                try:
+                    w, sr = torchaudio.load(fpath)
+                    # Convert to Qwen format
+                    # torchaudio load returns [C, L] tensor
+                    w_np = w.numpy()
+                    if w_np.ndim == 2: w_np = np.mean(w_np, axis=0)
+                    ref_audio_obj = (w_np, sr)
+                except Exception as e:
+                    print(f"Failed to load audio file {fpath}: {e}. Falling back to Design.")
+                    is_clone_mode = False
+            
+            if is_clone_mode and not has_clone_model:
+                print(f"Role {role_name} requested cloning but no 'clone_model' connected. Falling back to Design.")
+                is_clone_mode = False
+                
+            # Generation
+            wavs = []
+            output_sr = 24000
+            
+            if is_clone_mode:
+                print(f"Generating Line {valid_line_count+1} [CLONE]: {role_name}")
+                wavs, output_sr = clone_model.generate_voice_clone(
+                    text=content,
+                    language="Auto",
+                    ref_audio=ref_audio_obj,
+                    ref_text=None, # Clean clone, text agnostic
+                    do_sample=True
+                )
+            else:
+                # Design Mode
+                print(f"Generating Line {valid_line_count+1} [DESIGN]: {role_name}")
+                voice_desc = role_data["desc"]
+                if emotion: instruct = f"{emotion.strip()}, {voice_desc}"
+                else: instruct = voice_desc
+                
+                wavs, output_sr = model.generate_voice_design(
+                    text=content,
+                    language="Auto",
+                    instruct=instruct,
+                    do_sample=True
+                )
+            
+            if not wavs: continue
+            
+            sample_rate = output_sr
+            
+            # Process Output
+            w = wavs[0]
+            t = torch.from_numpy(w)
+            if t.ndim == 1: t = t.unsqueeze(0)
+            elif t.ndim == 2 and t.shape[0] > t.shape[1]: t = t.t()
+            t = t.unsqueeze(0) # [1, C, L]
+            
+            channels, audio_samples = get_tensor_props(t)
+            duration_seconds = audio_samples / sample_rate
+            
+            # Update SRT
+            valid_line_count += 1
+            start_time = current_time_seconds
+            end_time = start_time + duration_seconds
+            srt_lines.append(f"{valid_line_count}\n{format_timestamp(start_time)} --> {format_timestamp(end_time)}\n{role_name}: {content}\n")
+            
+            # Update Timelines
+            # Add audio to active role, silence to ALL others
+            for r_key, tl in timelines.items():
+                if r_key == active_role_key:
+                    tl.append(t)
+                else:
+                    silence = torch.zeros((1, channels, audio_samples), dtype=torch.float32)
+                    tl.append(silence)
+
+            current_time_seconds += duration_seconds
+            
+            # Interval Silence
+            if my_turn_interval > 0:
+                silence_samples = int(my_turn_interval * sample_rate)
+                silence_gap = torch.zeros((1, channels, silence_samples), dtype=torch.float32)
+                for tl in timelines.values():
+                    tl.append(silence_gap)
+                current_time_seconds += my_turn_interval
+
+        # Finalize Outputs
+        # Cat timelines
+        raw_outputs = {} # role_key -> tensor full
+        
+        # Max length align
+        max_len = 0
+        for r_key, tl in timelines.items():
+            if not tl:
+                 # If a defined role never spoke, create dummy silence of 0.1s
+                 dummy = torch.zeros((1, 1, int(sample_rate * 0.1)))
+                 raw_outputs[r_key] = dummy
+            else:
+                 cat_t = torch.cat(tl, dim=2)
+                 raw_outputs[r_key] = cat_t
+                 if cat_t.shape[2] > max_len: max_len = cat_t.shape[2]
+
+        # Pad to max_len
+        final_outputs = {}
+        for r_key, t in raw_outputs.items():
+            current_len = t.shape[2]
+            if current_len < max_len:
+                padding = torch.zeros((t.shape[0], t.shape[1], max_len - current_len), dtype=t.dtype)
+                t = torch.cat([t, padding], dim=2)
+            final_outputs[r_key] = t
+            
+        # Mix
+        final_mix = torch.zeros((1, 1, max_len)) # Init accumulator
+        for t in final_outputs.values():
+            if t.shape[1] > final_mix.shape[1]: 
+                final_mix = final_mix.repeat(1, t.shape[1], 1)
+            elif final_mix.shape[1] > t.shape[1]:
+                t = t.repeat(1, final_mix.shape[1], 1)
+            final_mix = final_mix + t
+
+        # Map to Static Outputs A/B/C
+        out_A = torch.zeros((1, 1, max_len))
+        out_B = torch.zeros((1, 1, max_len))
+        out_C = torch.zeros((1, 1, max_len))
+        
+        for r_key, r_data in roles_config.items():
+            t = final_outputs.get(r_key)
+            if t is None: continue
+            
+            sid = r_data["static_id"]
+            if sid == "A": out_A = t
+            elif sid == "B": out_B = t
+            elif sid == "C": out_C = t
+            
+        # Save to File if requested
+        if save_to_file:
+            output_dir = folder_paths.get_output_directory()
+            # Save Mix
+            torchaudio.save(os.path.join(output_dir, f"{filename_prefix}_MIX.wav"), final_mix[0], sample_rate)
+            # Save Roles
+            for r_key, t in final_outputs.items():
+                safe_name = "".join([c for c in r_key if c.isalnum() or c in (' ', '_', '-')]).strip()
+                fname = f"{filename_prefix}_{safe_name}.wav"
+                torchaudio.save(os.path.join(output_dir, fname), t[0], sample_rate)
+            print(f"Saved tracks to {output_dir}")
+
+        srt_output = "\n".join(srt_lines)
+        
+        return (
+            {"waveform": final_mix, "sample_rate": sample_rate},
+            {"waveform": out_A, "sample_rate": sample_rate},
+            {"waveform": out_B, "sample_rate": sample_rate},
+            {"waveform": out_C, "sample_rate": sample_rate},
+            srt_output,
+        )

@@ -1,0 +1,586 @@
+{
+    "last_node_id": 50,
+    "last_link_id": 60,
+    "nodes": [
+        {
+            "id": 1,
+            "type": "Qwen3TTSLoader",
+            "pos": [
+                50,
+                50
+            ],
+            "size": {
+                "0": 300,
+                "1": 82
+            },
+            "flags": {},
+            "order": 0,
+            "mode": 0,
+            "outputs": [
+                {
+                    "name": "model",
+                    "type": "QWEN3_TTS_MODEL",
+                    "links": [
+                        1,
+                        11,
+                        21,
+                        31,
+                        41,
+                        51
+                    ],
+                    "shape": 3
+                }
+            ],
+            "widgets_values": [
+                "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+                "bf16"
+            ]
+        },
+        {
+            "id": 2,
+            "type": "Qwen3TTSLoader",
+            "pos": [
+                50,
+                150
+            ],
+            "size": {
+                "0": 300,
+                "1": 82
+            },
+            "flags": {},
+            "order": 1,
+            "mode": 0,
+            "outputs": [
+                {
+                    "name": "model",
+                    "type": "QWEN3_TTS_MODEL",
+                    "links": [
+                        2
+                    ],
+                    "shape": 3
+                }
+            ],
+            "widgets_values": [
+                "Qwen/Qwen3-TTS-12Hz-1.7B-Base",
+                "bf16"
+            ]
+        },
+        {
+            "id": 10,
+            "type": "Qwen3TTSVoiceDesign",
+            "pos": [
+                50,
+                300
+            ],
+            "size": {
+                "0": 350,
+                "1": 200
+            },
+            "flags": {},
+            "order": 2,
+            "mode": 0,
+            "inputs": [
+                {
+                    "name": "model",
+                    "link": 11
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "audio",
+                    "type": "AUDIO",
+                    "links": [
+                        12
+                    ],
+                    "shape": 3
+                }
+            ],
+            "widgets_values": [
+                "I am the Hero.",
+                "A brave young hero voice.",
+                "Auto"
+            ]
+        },
+        {
+            "id": 20,
+            "type": "Qwen3TTSVoiceDesign",
+            "pos": [
+                50,
+                550
+            ],
+            "size": {
+                "0": 350,
+                "1": 200
+            },
+            "flags": {},
+            "order": 3,
+            "mode": 0,
+            "inputs": [
+                {
+                    "name": "model",
+                    "link": 21
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "audio",
+                    "type": "AUDIO",
+                    "links": [
+                        22
+                    ],
+                    "shape": 3
+                }
+            ],
+            "widgets_values": [
+                "I am the Villain.",
+                "A deep, raspy villain voice.",
+                "Auto"
+            ]
+        },
+        {
+            "id": 30,
+            "type": "LoadAudio",
+            "pos": [
+                50,
+                800
+            ],
+            "size": {
+                "0": 315,
+                "1": 124
+            },
+            "flags": {},
+            "order": 4,
+            "mode": 0,
+            "outputs": [
+                {
+                    "name": "audio",
+                    "type": "AUDIO",
+                    "links": [
+                        32
+                    ],
+                    "shape": 3
+                }
+            ],
+            "widgets_values": [
+                "narrator_sample.wav",
+                "upload"
+            ]
+        },
+        {
+            "id": 40,
+            "type": "Qwen3TTSVoiceDesign",
+            "pos": [
+                450,
+                300
+            ],
+            "size": {
+                "0": 350,
+                "1": 200
+            },
+            "flags": {},
+            "order": 5,
+            "mode": 0,
+            "inputs": [
+                {
+                    "name": "model",
+                    "link": 31
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "audio",
+                    "type": "AUDIO",
+                    "links": [
+                        42
+                    ],
+                    "shape": 3
+                }
+            ],
+            "widgets_values": [
+                "I am the Wizard.",
+                "A wise, shaky old man voice.",
+                "Auto"
+            ]
+        },
+        {
+            "id": 50,
+            "type": "Qwen3TTSVoiceDesign",
+            "pos": [
+                450,
+                550
+            ],
+            "size": {
+                "0": 350,
+                "1": 200
+            },
+            "flags": {},
+            "order": 6,
+            "mode": 0,
+            "inputs": [
+                {
+                    "name": "model",
+                    "link": 41
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "audio",
+                    "type": "AUDIO",
+                    "links": [
+                        52
+                    ],
+                    "shape": 3
+                }
+            ],
+            "widgets_values": [
+                "I am the Witch.",
+                "A cackling, sharp female voice.",
+                "Auto"
+            ]
+        },
+        {
+            "id": 60,
+            "type": "LoadAudio",
+            "pos": [
+                450,
+                800
+            ],
+            "size": {
+                "0": 315,
+                "1": 124
+            },
+            "flags": {},
+            "order": 7,
+            "mode": 0,
+            "outputs": [
+                {
+                    "name": "audio",
+                    "type": "AUDIO",
+                    "links": [
+                        62
+                    ],
+                    "shape": 3
+                }
+            ],
+            "widgets_values": [
+                "robot_beep.wav",
+                "upload"
+            ]
+        },
+        {
+            "id": 70,
+            "type": "Qwen3TTSVoiceDesign",
+            "pos": [
+                450,
+                1050
+            ],
+            "size": {
+                "0": 350,
+                "1": 200
+            },
+            "flags": {},
+            "order": 8,
+            "mode": 0,
+            "inputs": [
+                {
+                    "name": "model",
+                    "link": 51
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "audio",
+                    "type": "AUDIO",
+                    "links": [
+                        72
+                    ],
+                    "shape": 3
+                }
+            ],
+            "widgets_values": [
+                "I am the Ghost.",
+                "A whispering, echoey voice.",
+                "Auto"
+            ]
+        },
+        {
+            "id": 100,
+            "type": "Qwen3TTSStageManager",
+            "pos": [
+                900,
+                100
+            ],
+            "size": {
+                "0": 550,
+                "1": 900
+            },
+            "flags": {},
+            "order": 9,
+            "mode": 0,
+            "inputs": [
+                {
+                    "name": "model",
+                    "link": 1
+                },
+                {
+                    "name": "clone_model",
+                    "link": 2
+                },
+                {
+                    "name": "role_A_audio",
+                    "link": 12
+                },
+                {
+                    "name": "role_B_audio",
+                    "link": 22
+                },
+                {
+                    "name": "role_C_audio",
+                    "link": 32
+                },
+                {
+                    "name": "role_D_audio",
+                    "link": 42
+                },
+                {
+                    "name": "role_E_audio",
+                    "link": 52
+                },
+                {
+                    "name": "role_F_audio",
+                    "link": 62
+                },
+                {
+                    "name": "role_G_audio",
+                    "link": 72
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "audio_mix",
+                    "type": "AUDIO",
+                    "links": [
+                        101
+                    ]
+                },
+                {
+                    "name": "srt_content",
+                    "type": "STRING",
+                    "links": [
+                        102
+                    ]
+                }
+            ],
+            "widgets_values": [
+                "Narrator: (Calm) The gathering begins.\nHero: (Bold) I have arrived!\nVillain: (Laughs) You are too late.\nWizard: (Wise) Magic is never late.\nWitch: (Cackles) But curses are early!\nRobot: (Beeep) Logic error detected.\nGhost: (Whisper) I am watching you all...",
+                "Wizard: This format maps Input D.\nWitch: This format maps Input E.\nRobot: This format maps Input F.\nGhost: This format maps Input G.",
+                "Hero",
+                "Mapped to Input A",
+                0.5,
+                true,
+                "studio_mix",
+                "Villain",
+                "Mapped to Input B",
+                "Narrator",
+                "Mapped to Input C"
+            ]
+        },
+        {
+            "id": 101,
+            "type": "SaveAudio",
+            "pos": [
+                1500,
+                100
+            ],
+            "size": {
+                "0": 300,
+                "1": 100
+            },
+            "flags": {},
+            "order": 10,
+            "mode": 0,
+            "inputs": [
+                {
+                    "name": "audio",
+                    "link": 101
+                }
+            ],
+            "widgets_values": [
+                "full_studio_mix"
+            ]
+        },
+        {
+            "id": 102,
+            "type": "PrimitiveNode",
+            "pos": [
+                1500,
+                300
+            ],
+            "size": {
+                "0": 400,
+                "1": 400
+            },
+            "flags": {},
+            "order": 11,
+            "mode": 0,
+            "inputs": [
+                {
+                    "name": "string_input",
+                    "link": 102
+                }
+            ],
+            "widgets_values": [
+                "SRT Output"
+            ]
+        },
+        {
+            "id": 200,
+            "type": "Note",
+            "pos": [
+                900,
+                20
+            ],
+            "size": {
+                "0": 550,
+                "1": 60
+            },
+            "flags": {},
+            "order": 12,
+            "mode": 0,
+            "widgets_values": [
+                "Full Studio Workflow: 7 Roles, 7 Sources.\nVerify connections on the left to see how A-G are wired."
+            ]
+        }
+    ],
+    "links": [
+        [
+            1,
+            1,
+            0,
+            100,
+            0,
+            "QWEN3_TTS_MODEL"
+        ],
+        [
+            2,
+            2,
+            0,
+            100,
+            1,
+            "QWEN3_TTS_MODEL"
+        ],
+        [
+            11,
+            1,
+            0,
+            10,
+            0,
+            "QWEN3_TTS_MODEL"
+        ],
+        [
+            12,
+            10,
+            0,
+            100,
+            2,
+            "AUDIO"
+        ],
+        [
+            21,
+            1,
+            0,
+            20,
+            0,
+            "QWEN3_TTS_MODEL"
+        ],
+        [
+            22,
+            20,
+            0,
+            100,
+            3,
+            "AUDIO"
+        ],
+        [
+            31,
+            1,
+            0,
+            40,
+            0,
+            "QWEN3_TTS_MODEL"
+        ],
+        [
+            32,
+            30,
+            0,
+            100,
+            4,
+            "AUDIO"
+        ],
+        [
+            41,
+            1,
+            0,
+            50,
+            0,
+            "QWEN3_TTS_MODEL"
+        ],
+        [
+            42,
+            40,
+            0,
+            100,
+            5,
+            "AUDIO"
+        ],
+        [
+            51,
+            1,
+            0,
+            50,
+            0,
+            "QWEN3_TTS_MODEL"
+        ],
+        [
+            52,
+            50,
+            0,
+            100,
+            6,
+            "AUDIO"
+        ],
+        [
+            62,
+            60,
+            0,
+            100,
+            7,
+            "AUDIO"
+        ],
+        [
+            72,
+            70,
+            0,
+            100,
+            8,
+            "AUDIO"
+        ],
+        [
+            101,
+            100,
+            0,
+            101,
+            0,
+            "AUDIO"
+        ],
+        [
+            102,
+            100,
+            4,
+            102,
+            0,
+            "STRING"
+        ]
+    ],
+    "version": 0.4
+}
