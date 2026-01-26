@@ -332,8 +332,8 @@ class Qwen3TTSStageManager:
             }
         }
     
-    RETURN_TYPES = ("AUDIO", "AUDIO", "AUDIO", "AUDIO", "STRING",)
-    RETURN_NAMES = ("audio_mix", "audio_role_A/0", "audio_role_B/1", "audio_role_C/2", "srt_content",)
+    RETURN_TYPES = ("AUDIO", "AUDIO", "AUDIO", "AUDIO", "AUDIO", "AUDIO", "AUDIO", "AUDIO", "STRING",)
+    RETURN_NAMES = ("audio_mix", "audio_role_A", "audio_role_B", "audio_role_C", "audio_role_D", "audio_role_E", "audio_role_F", "audio_role_G", "srt_content",)
     FUNCTION = "generate_scene"
     CATEGORY = "Qwen3TTS"
 
@@ -413,7 +413,7 @@ class Qwen3TTSStageManager:
             
             roles_config[r_name] = {
                 "desc": r_desc, 
-                "static_id": final_slot if final_slot in ["A", "B", "C"] else None, 
+                "static_id": final_slot if final_slot in ["A", "B", "C", "D", "E", "F", "G"] else None, 
                 "audio_input": role_audio_input, 
                 "is_file": is_file
             }
@@ -650,10 +650,14 @@ class Qwen3TTSStageManager:
                 t = t.repeat(1, final_mix.shape[1], 1)
             final_mix = final_mix + t
 
-        # Map to Static Outputs A/B/C
+        # Map to Static Outputs A-G
         out_A = torch.zeros((1, 1, max_len))
         out_B = torch.zeros((1, 1, max_len))
         out_C = torch.zeros((1, 1, max_len))
+        out_D = torch.zeros((1, 1, max_len))
+        out_E = torch.zeros((1, 1, max_len))
+        out_F = torch.zeros((1, 1, max_len))
+        out_G = torch.zeros((1, 1, max_len))
         
         for r_key, r_data in roles_config.items():
             t = final_outputs.get(r_key)
@@ -663,6 +667,10 @@ class Qwen3TTSStageManager:
             if sid == "A": out_A = t
             elif sid == "B": out_B = t
             elif sid == "C": out_C = t
+            elif sid == "D": out_D = t
+            elif sid == "E": out_E = t
+            elif sid == "F": out_F = t
+            elif sid == "G": out_G = t
             
         # Save to File if requested
         if save_to_file:
@@ -683,6 +691,10 @@ class Qwen3TTSStageManager:
             {"waveform": out_A, "sample_rate": sample_rate},
             {"waveform": out_B, "sample_rate": sample_rate},
             {"waveform": out_C, "sample_rate": sample_rate},
+            {"waveform": out_D, "sample_rate": sample_rate},
+            {"waveform": out_E, "sample_rate": sample_rate},
+            {"waveform": out_F, "sample_rate": sample_rate},
+            {"waveform": out_G, "sample_rate": sample_rate},
             srt_output,
         )
 
