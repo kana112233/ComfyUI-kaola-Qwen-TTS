@@ -285,33 +285,6 @@ def process_waves_to_audio(wavs, output_sr):
         return {"waveform": final_tensor, "sample_rate": output_sr}
     return None
 
-class Qwen3TTSPromptComposer:
-    @classmethod
-    def INPUT_TYPES(s):
-        return {
-            "required": {
-                "voice_description": ("STRING", {"multiline": True, "default": "A middle-aged man with a deep, authoritative voice."}),
-                "style_emotion": ("STRING", {"multiline": True, "default": "Speaking in a calm and reassuring tone."}),
-            },
-            "optional": {
-                "concatenation_template": ("STRING", {"multiline": False, "default": "{style_emotion}, {voice_description}"}),
-            }
-        }
-    
-    RETURN_TYPES = ("STRING",)
-    RETURN_NAMES = ("instruct",)
-    FUNCTION = "compose"
-    CATEGORY = "Qwen3TTS"
-
-    def compose(self, voice_description, style_emotion, concatenation_template="{style_emotion}, {voice_description}"):
-        # Simple template substitution
-        # We replace {voice_description} and {style_emotion} with provided text
-        result = concatenation_template.replace("{voice_description}", voice_description)
-        result = result.replace("{style_emotion}", style_emotion)
-        
-        print(f"Composed Prompt: {result}")
-        return (result,)
-
 class Qwen3TTSStageManager:
     @classmethod
     def INPUT_TYPES(s):
@@ -659,7 +632,6 @@ NODE_CLASS_MAPPINGS = {
     "Qwen3TTSCustomVoice": Qwen3TTSCustomVoice,
     "Qwen3TTSVoiceDesign": Qwen3TTSVoiceDesign,
     "Qwen3TTSVoiceClone": Qwen3TTSVoiceClone,
-    "Qwen3TTSPromptComposer": Qwen3TTSPromptComposer,
     "Qwen3TTSStageManager": Qwen3TTSStageManager,
 }
 
@@ -668,6 +640,5 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "Qwen3TTSCustomVoice": "Qwen3 TTS Custom Voice",
     "Qwen3TTSVoiceDesign": "Qwen3 TTS Voice Design",
     "Qwen3TTSVoiceClone": "Qwen3 TTS Voice Clone",
-    "Qwen3TTSPromptComposer": "Qwen3 TTS Prompt Composer 🎵",
     "Qwen3TTSStageManager": "Qwen3 TTS Stage Manager 🎬",
 }
