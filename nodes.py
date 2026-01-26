@@ -310,21 +310,18 @@ class Qwen3TTSStageManager:
     def INPUT_TYPES(s):
         return {
             "required": {
+                "model": ("QWEN3_TTS_MODEL",),
                 "script": ("STRING", {"multiline": True, "default": "Narrator: The adventure begins.\nHero: Let's go!"}),
                 "role_definitions": ("STRING", {"multiline": True, "default": "Narrator [A]: A clear, neutral voice.\nHero [B]: A brave, young voice."}),
                 "my_turn_interval": ("FLOAT", {"default": 0.5, "min": 0.0, "max": 5.0, "step": 0.1}),
             },
             "optional": {
-                "model": ("QWEN3_TTS_MODEL",),
-                "clone_model": ("QWEN3_TTS_MODEL",),
                 "top_p": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 1.0, "step": 0.01}),
                 "temperature": ("FLOAT", {"default": 0.7, "min": 0.0, "max": 2.0, "step": 0.01}),
                 "repetition_penalty": ("FLOAT", {"default": 1.05, "min": 0.0, "max": 2.0, "step": 0.01}),
                 "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff}),
                 "save_to_file": ("BOOLEAN", {"default": False, "label_on": "Save Tracks"}),
                 "filename_prefix": ("STRING", {"default": "stage_manager"}),
-            },
-            "optional": {
                 "role_A_audio": ("AUDIO",),
                 "role_B_audio": ("AUDIO",),
                 "role_C_audio": ("AUDIO",),
@@ -340,25 +337,19 @@ class Qwen3TTSStageManager:
     FUNCTION = "generate_scene"
     CATEGORY = "Qwen3TTS"
 
-    def generate_scene(self, script, role_definitions, my_turn_interval=0.5, 
-                       model=None, clone_model=None,
+    def generate_scene(self, model, script, role_definitions, my_turn_interval=0.5, 
                        top_p=1.0, temperature=0.7, repetition_penalty=1.05, seed=0,
                        save_to_file=False, filename_prefix="stage_manager", 
                        role_A_audio=None, role_B_audio=None, role_C_audio=None, 
                        role_D_audio=None, role_E_audio=None, role_F_audio=None, role_G_audio=None):
         
         # Validation checks
-        if model is None and clone_model is None:
-             raise ValueError("Stage Manager needs at least one model! Connect either 'model' (for creation) or 'clone_model' (for cloning).")
+        if model is None:
+             raise ValueError("Stage Manager needs a model!")
 
-        if model is not None and model.model.tts_model_type != "voice_design":
-             # Warn but don't crash? Or crashing is safer.
-             raise ValueError(f"Stage Manager 'model' input requires a 'voice_design' model, but loaded '{model.model.tts_model_type}'.")
+        model_type = model.model.tts_model_type
+        print(f"StageManager loaded model type: {model_type}")
         
-        has_clone_model = False
-        if clone_model is not None:
-             has_clone_model = True
-
         # Config map
         roles_config = {}
         
@@ -473,6 +464,8 @@ class Qwen3TTSStageManager:
             if w_np.ndim > 1: w_np = w_np.flatten()
             return (w_np, sr)
 
+        last_valid_role = None
+
         for i, line in enumerate(script_lines):
             print(f"DEBUG: Processing Line {i+1}/{len(script_lines)}: {line[:30]}...")
             
@@ -480,20 +473,27 @@ class Qwen3TTSStageManager:
             if seed is not None:
                 line_seed = seed + i
                 torch.manual_seed(line_seed)
-                # np.random.seed(line_seed) # Optional if numpy is used for sampling
             
             line = line.strip()
             if not line: continue
             
             match = pattern.match(line)
-            if not match: 
-                print(f"DEBUG: Regex failed match for line: {line}")
-                continue
+            role_name = None
+            content = None
+
+            if match:
+                role_name = match.group(1).strip()
+                content = match.group(2).strip()
+                last_valid_role = role_name
+            else:
+                if last_valid_role:
+                    role_name = last_valid_role
+                    content = line
+                    print(f"DEBUG: Auto-assigned line to previous role: {role_name}")
+                else: 
+                    print(f"DEBUG: Regex failed match and no previous role: {line}")
+                    continue
                 
-            role_name = match.group(1).strip()
-            # Group 2 is now Content directly
-            content = match.group(2).strip()
-            
             active_role_key = None
             for r_key in roles_config:
                 if r_key.lower() == role_name.lower():
@@ -545,17 +545,13 @@ class Qwen3TTSStageManager:
                     print(f"Failed to load audio file {fpath}: {e}. Falling back to Design.")
                     is_clone_mode = False
             
-            if is_clone_mode and not has_clone_model:
-                print(f"Role {role_name} requested cloning but no 'clone_model' connected. Falling back to Design.")
-                is_clone_mode = False
-                
             # Generation
             wavs = []
             output_sr = 24000
             
             if is_clone_mode:
                 print(f"Generating Line {valid_line_count+1} [CLONE]: {role_name}")
-                wavs, output_sr = clone_model.generate_voice_clone(
+                wavs, output_sr = model.generate_voice_clone(
                     text=content,
                     language="Auto",
                     ref_audio=ref_audio_obj,
@@ -568,9 +564,6 @@ class Qwen3TTSStageManager:
                 )
             else:
                 # Design Mode
-                if model is None:
-                    raise ValueError(f"Role '{role_name}' requires Voice Creation (Design Mode), but no 'model' (VoiceDesign) is connected to the StageManager. Please connect a Qwen3-VoiceDesign model or provide audio input for this role.")
-
                 print(f"Generating Line {valid_line_count+1} [DESIGN]: {role_name}")
                 instruct = role_data["desc"]
                 
@@ -703,10 +696,10 @@ NODE_CLASS_MAPPINGS = {
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
-    "Qwen3TTSLoader": "Qwen3 TTS Model Loader",
-    "Qwen3TTSCustomVoice": "Qwen3 TTS Custom Voice",
-    "Qwen3TTSVoiceDesign": "Qwen3 TTS Voice Design",
-    "Qwen3TTSVoiceClone": "Qwen3 TTS Voice Clone",
-    "Qwen3TTSStageManager": "Qwen3 TTS Stage Manager 🎬",
-    "Qwen3TTSRefAudio": "Qwen3 TTS Ref Audio (Audio+Text)",
+    "Qwen3TTSLoader": "Model Loader",
+    "Qwen3TTSCustomVoice": "Custom Voice (Prompt)",
+    "Qwen3TTSVoiceDesign": "Voice Design (Text)",
+    "Qwen3TTSVoiceClone": "Voice Clone",
+    "Qwen3TTSStageManager": "Stage Manager 🎬",
+    "Qwen3TTSRefAudio": "Ref Audio (Audio+Text)",
 }

@@ -49,7 +49,17 @@
     ```
     角色名：(情感) 台词内容...
     ```
-*(支持中文冒号 `：` 和括号 `（）`)*
+    ```
+    (支持中文冒号 `：` 和括号 `（）`)
+
+3.  **多行对话支持 (Multi-line Support)**：
+    如果后续的行没有写角色名，系统会自动认为是**上一位角色**继续说话。
+    ```
+    Narrator: The sun set.
+    It was a dark night. (Narrator continues)
+    Suddenly, a noise! (Narrator continues)
+    Hero: Who goes there?
+    ```
 
 ### 3. **Role Definitions (角色表)** - **核心配置区**
 
@@ -94,8 +104,11 @@ Narrator: (Calm) And so the journey begins.
 
 如果你想使用特定的声音（如你自己的录音），而不是由 AI 捏造声音：
 
-1.  **连接克隆模型**：
-    Stage Manager 节点新增了 `clone_model` 接口。**必须**连接 `Qwen3-TTS-Base`（不是 VoiceDesign）模型及 Text 提示词模型。
+1.  **连接模型**：
+    Stage Manager 节点现在整合为单一的 `model` 接口。
+    *   **推荐**：连接 `Qwen3-VoiceDesign` 模型（微调版）。它既能根据文本捏造声音，也能进行零样本克隆。
+    *   **或者**：连接 `Qwen3-TTS-Base` 原版模型。
+    *   *注意：不再需要单独的 `clone_model`。一个模型搞定所有。*
 
 2.  **连接音频文件**：
     节点新增了 7 个音频输入口：`role_A_audio` ~ `role_G_audio`。
