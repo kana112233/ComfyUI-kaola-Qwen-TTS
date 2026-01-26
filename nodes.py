@@ -502,7 +502,8 @@ class Qwen3TTSStageManager:
                     text=content,
                     language="Auto",
                     ref_audio=ref_audio_obj,
-                    ref_text=None, # Clean clone, text agnostic
+                    ref_text=None,
+                    x_vector_only_mode=True, # No ref_text available in StageManager, so must use x-vector
                     do_sample=True
                 )
             else:
