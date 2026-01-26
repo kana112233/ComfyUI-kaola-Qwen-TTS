@@ -427,6 +427,7 @@ class Qwen3TTSStageManager:
 
         # 3. Parse Script
         script_lines = script.strip().split('\n')
+        print(f"DEBUG: Parsed {len(script_lines)} lines from script.")
 
         # Dynamic Timelines
         timelines = {}
@@ -467,11 +468,14 @@ class Qwen3TTSStageManager:
             return (w_np, sr)
 
         for i, line in enumerate(script_lines):
+            print(f"DEBUG: Processing Line {i+1}/{len(script_lines)}: {line[:30]}...")
             line = line.strip()
             if not line: continue
             
             match = pattern.match(line)
-            if not match: continue
+            if not match: 
+                print(f"DEBUG: Regex failed match for line: {line}")
+                continue
                 
             role_name = match.group(1).strip()
             emotion = match.group(2)
