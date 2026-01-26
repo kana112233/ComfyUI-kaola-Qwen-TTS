@@ -373,16 +373,10 @@
             ],
             "widgets_values": [
                 "Narrator: (Calm) The gathering begins.\nHero: (Bold) I have arrived!\nVillain: (Laughs) You are too late.\nWizard: (Wise) Magic is never late.\nWitch: (Cackles) But curses are early!\nRobot: (Beeep) Logic error detected.\nGhost: (Whisper) I am watching you all...",
-                "Wizard: This format maps Input D.\nWitch: This format maps Input E.\nRobot: This format maps Input F.\nGhost: This format maps Input G.",
-                "Hero",
-                "Mapped to Input A",
+                "Hero [A]: Mapped to Input A\nVillain [B]: Mapped to Input B\nNarrator [C]: Mapped to Input C\nWizard [D]: Mapped to Input D\nWitch [E]: Mapped to Input E\nRobot [F]: Mapped to Input F\nGhost [G]: Mapped to Input G",
                 0.5,
                 true,
-                "studio_mix",
-                "Villain",
-                "Mapped to Input B",
-                "Narrator",
-                "Mapped to Input C"
+                "studio_mix"
             ]
         },
         {

@@ -51,12 +51,28 @@
     ```
 *(支持中文冒号 `：` 和括号 `（）`)*
 
-**多角色剧本示例：**
-*Role Definitions:*
-```
-Wizard: A wise old man, raspy voice.
-Warrior: A strong female voice.
-```
+### 3. **Role Definitions (角色表)** - **核心配置区**
+
+这是定义该场景中所有角色的地方。
+
+**新版语法 (Unified Explicit Binding)**：
+你可以显式指定每个角色绑定到哪个音频输入插口 (A-G)。
+
+*   格式：`角色名 [A]: 声音描述`
+*   示例：
+    ```text
+    King [A]: A deep, regal voice.        <-- 强制使用 Input A
+    Queen [B]: A gentle female voice.     <-- 强制使用 Input B
+    Guard [C]: A rough, nervous voice.    <-- 强制使用 Input C
+    ```
+
+**混合模式**：
+*   **克隆 (Clone)**: 如果你在节点左侧给 `role_A_audio` 连了线，那么 `King [A]` 就会忽略后面的文字描述，直接克隆 Input A 的声音。
+*   **捏造 (Design)**: 如果 Input A 没连线，那么 AI 会根据 "A deep, regal voice" 这段文字去捏造声音。
+
+**自动补位 (Auto-Assign)**:
+如果你不写 `[A]`，像这样：`Narrator: A calm voice.`
+系统会自动寻找第一个没被占用的插口分配给它（比如 D）。
 *Script:*
 ```
 Wizard: (Mysterious) The seal is broken.

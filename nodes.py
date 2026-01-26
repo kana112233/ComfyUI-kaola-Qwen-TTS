@@ -292,16 +292,10 @@ class Qwen3TTSStageManager:
             "required": {
                 "model": ("QWEN3_TTS_MODEL",),
                 "script": ("STRING", {"multiline": True, "default": "Narrator: (Calm) The adventure begins.\nHero: (Bold) Let's go!"}),
-                "role_definitions": ("STRING", {"multiline": True, "default": "Narrator: A clear, neutral voice.\nHero: A brave, young voice."}),
-                "role_A_name": ("STRING", {"default": "Narrator"}),
-                "role_A_desc": ("STRING", {"multiline": True, "default": "A clear, neutral narrator voice."}),
+                "role_definitions": ("STRING", {"multiline": True, "default": "Narrator [A]: A clear, neutral voice.\nHero [B]: A brave, young voice."}),
                 "my_turn_interval": ("FLOAT", {"default": 0.5, "min": 0.0, "max": 5.0, "step": 0.1}),
             },
             "optional": {
-                "role_B_name": ("STRING", {"default": "Hero"}),
-                "role_B_desc": ("STRING", {"multiline": True, "default": "A young, determined hero."}),
-                "role_C_name": ("STRING", {"default": "Villain"}),
-                "role_C_desc": ("STRING", {"multiline": True, "default": "A raspy, evil villain."}),
                 "save_to_file": ("BOOLEAN", {"default": False, "label_on": "Save Tracks"}),
                 "filename_prefix": ("STRING", {"default": "stage_manager"}),
             },
@@ -322,9 +316,8 @@ class Qwen3TTSStageManager:
     FUNCTION = "generate_scene"
     CATEGORY = "Qwen3TTS"
 
-    def generate_scene(self, model, script, role_definitions, role_A_name, role_A_desc, my_turn_interval=0.5, 
+    def generate_scene(self, model, script, role_definitions, my_turn_interval=0.5, 
                        save_to_file=False, filename_prefix="stage_manager", 
-                       role_B_name=None, role_B_desc=None, role_C_name=None, role_C_desc=None,
                        clone_model=None, 
                        role_A_audio=None, role_B_audio=None, role_C_audio=None, 
                        role_D_audio=None, role_E_audio=None, role_F_audio=None, role_G_audio=None):
@@ -340,22 +333,23 @@ class Qwen3TTSStageManager:
         # Config map
         roles_config = {}
         
-        # 1. Parse Static Inputs (Legacy/Quick Start)
-        if role_A_name: roles_config[role_A_name] = {"desc": role_A_desc, "static_id": "A", "audio_input": role_A_audio}
-        if role_B_name and role_B_desc: roles_config[role_B_name] = {"desc": role_B_desc, "static_id": "B", "audio_input": role_B_audio}
-        if role_C_name and role_C_desc: roles_config[role_C_name] = {"desc": role_C_desc, "static_id": "C", "audio_input": role_C_audio}
-        
-        # Store other audio slots for dynamic assignment mapping
-        # Map: Slot Index -> Audio Input
-        extra_audio_slots = [role_D_audio, role_E_audio, role_F_audio, role_G_audio]
-        
-        
-        # 2. Parse Dedicated Role Definitions
+        # Audio Slot Map
+        audio_slots = {
+            "A": role_A_audio, "B": role_B_audio, "C": role_C_audio,
+            "D": role_D_audio, "E": role_E_audio, "F": role_F_audio, "G": role_G_audio
+        }
+        used_slots = set()
+        slot_keys = sorted(list(audio_slots.keys())) # A, B, C, D, E, F, G
+
+        # Parse Role Definitions
         def_lines = role_definitions.strip().split('\n')
-        def_pattern = re.compile(r"^(.+?)\s*[:：]\s*(.+)$")
         
-        extra_slot_idx = 0
+        # Regex: Name [A]: Desc or Name: Desc
+        # Group 1: Name, Group 2: Slot (Optional), Group 3: Desc
+        def_pattern = re.compile(r"^(.+?)(?:\s*\[([A-G])\])?\s*[:：]\s*(.+)$", re.IGNORECASE)
         
+        parsed_roles = [] # list of (name, requested_slot, desc)
+
         for line in def_lines:
             line = line.strip()
             if not line: continue
@@ -363,39 +357,49 @@ class Qwen3TTSStageManager:
             match = def_pattern.match(line)
             if match:
                 r_name = match.group(1).strip()
-                r_desc = match.group(2).strip()
-                
-                # Check if it's a file path
-                possible_path = r_desc.strip('"').strip("'")
-                is_file = os.path.isfile(possible_path)
-                
-                # Check if this role matches a static input A, B, or C
-                existing_role = roles_config.get(r_name)
-                
-                # Determine audio input
-                role_audio_input = None
-                
-                if existing_role:
-                    # Already has config (from A/B/C), keep its audio input if present
-                    role_audio_input = existing_role.get("audio_input")
-                    roles_config[r_name]["desc"] = r_desc # Text override
-                    roles_config[r_name]["is_file"] = is_file
-                else:
-                    # New role. Check if we have spare audio slots to auto-assign
-                    if extra_slot_idx < len(extra_audio_slots):
-                        role_audio_input = extra_audio_slots[extra_slot_idx]
-                        if role_audio_input is not None:
-                             # This role gets the next available audio slot (D, E, F, G)
-                             # Logic: User connects "Role D" audio. The FIRST defined role that isn't A/B/C gets it.
-                             pass
-                        extra_slot_idx += 1
-                    
-                    roles_config[r_name] = {"desc": r_desc, "static_id": None, "audio_input": role_audio_input, "is_file": is_file}
-                
-                # Note: "static_id" is only for fixed OUTPUTS A/B/C.
-                
-                current_audio = "Input" if role_audio_input is not None else ("File" if is_file else "None")
-                print(f"Role Configured: {r_name} -> {r_desc} (Audio: {current_audio})")
+                r_slot = match.group(2).upper() if match.group(2) else None
+                r_desc = match.group(3).strip()
+                parsed_roles.append({'name': r_name, 'req': r_slot, 'desc': r_desc})
+                if r_slot:
+                    used_slots.add(r_slot)
+        
+        # Assignment Logic
+        for role in parsed_roles:
+            r_name = role['name']
+            r_req = role['req']
+            r_desc = role['desc']
+            
+            final_slot = None
+            
+            if r_req:
+                # Explicit assignment
+                final_slot = r_req
+            else:
+                # Auto-assignment: Find first unused slot
+                for s in slot_keys:
+                    if s not in used_slots:
+                        final_slot = s
+                        used_slots.add(s)
+                        break
+            
+            # Determine Audio Input
+            role_audio_input = None
+            if final_slot:
+                role_audio_input = audio_slots.get(final_slot)
+            
+            # File Check
+            possible_path = r_desc.strip('"').strip("'")
+            is_file = os.path.isfile(possible_path)
+            
+            roles_config[r_name] = {
+                "desc": r_desc, 
+                "static_id": final_slot if final_slot in ["A", "B", "C"] else None, 
+                "audio_input": role_audio_input, 
+                "is_file": is_file
+            }
+            
+            current_audio = f"Input {final_slot}" if role_audio_input is not None else ("File" if is_file else "None")
+            print(f"Role Configured: {r_name} -> Slot [{final_slot or 'None'}] -> {current_audio}")
 
         # 3. Parse Script
         script_lines = script.strip().split('\n')
