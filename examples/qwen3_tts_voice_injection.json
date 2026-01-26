@@ -134,6 +134,10 @@
                 "MyVoice: Wow, I cloned this voice just by uploading a file!",
                 "MyVoice [A]: (Optional Note)",
                 0.5,
+                1.0,
+                0.7,
+                1.05,
+                0,
                 false,
                 "voice_injection"
             ]

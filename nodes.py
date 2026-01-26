@@ -317,6 +317,10 @@ class Qwen3TTSStageManager:
             "optional": {
                 "model": ("QWEN3_TTS_MODEL",),
                 "clone_model": ("QWEN3_TTS_MODEL",),
+                "top_p": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 1.0, "step": 0.01}),
+                "temperature": ("FLOAT", {"default": 0.7, "min": 0.0, "max": 2.0, "step": 0.01}),
+                "repetition_penalty": ("FLOAT", {"default": 1.05, "min": 0.0, "max": 2.0, "step": 0.01}),
+                "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff}),
                 "save_to_file": ("BOOLEAN", {"default": False, "label_on": "Save Tracks"}),
                 "filename_prefix": ("STRING", {"default": "stage_manager"}),
             },
@@ -338,6 +342,7 @@ class Qwen3TTSStageManager:
 
     def generate_scene(self, script, role_definitions, my_turn_interval=0.5, 
                        model=None, clone_model=None,
+                       top_p=1.0, temperature=0.7, repetition_penalty=1.05, seed=0,
                        save_to_file=False, filename_prefix="stage_manager", 
                        role_A_audio=None, role_B_audio=None, role_C_audio=None, 
                        role_D_audio=None, role_E_audio=None, role_F_audio=None, role_G_audio=None):
@@ -438,8 +443,9 @@ class Qwen3TTSStageManager:
         srt_lines = []
         current_time_seconds = 0.0
         
-        pattern = re.compile(r"^(.+?)[:：](?:\s*[(\uff08](.+?)[)\uff09])?\s*(.+)$")
-
+        # Regex: Name: Content (Supports : or ：)
+        pattern = re.compile(r"^(.+?)[:：]\s*(.+)$")
+        
         def format_timestamp(seconds):
             millis = int((seconds % 1) * 1000)
             seconds = int(seconds)
@@ -469,6 +475,13 @@ class Qwen3TTSStageManager:
 
         for i, line in enumerate(script_lines):
             print(f"DEBUG: Processing Line {i+1}/{len(script_lines)}: {line[:30]}...")
+            
+            # Deterministic seeding per line
+            if seed is not None:
+                line_seed = seed + i
+                torch.manual_seed(line_seed)
+                # np.random.seed(line_seed) # Optional if numpy is used for sampling
+            
             line = line.strip()
             if not line: continue
             
@@ -478,8 +491,8 @@ class Qwen3TTSStageManager:
                 continue
                 
             role_name = match.group(1).strip()
-            emotion = match.group(2)
-            content = match.group(3).strip()
+            # Group 2 is now Content directly
+            content = match.group(2).strip()
             
             active_role_key = None
             for r_key in roles_config:
@@ -548,7 +561,10 @@ class Qwen3TTSStageManager:
                     ref_audio=ref_audio_obj,
                     ref_text=ref_text_obj,
                     x_vector_only_mode=x_vector,
-                    do_sample=True
+                    do_sample=True,
+                    top_p=top_p,
+                    temperature=temperature,
+                    repetition_penalty=repetition_penalty,
                 )
             else:
                 # Design Mode
@@ -556,15 +572,16 @@ class Qwen3TTSStageManager:
                     raise ValueError(f"Role '{role_name}' requires Voice Creation (Design Mode), but no 'model' (VoiceDesign) is connected to the StageManager. Please connect a Qwen3-VoiceDesign model or provide audio input for this role.")
 
                 print(f"Generating Line {valid_line_count+1} [DESIGN]: {role_name}")
-                voice_desc = role_data["desc"]
-                if emotion: instruct = f"{emotion.strip()}, {voice_desc}"
-                else: instruct = voice_desc
+                instruct = role_data["desc"]
                 
                 wavs, output_sr = model.generate_voice_design(
                     text=content,
                     language="Auto",
                     instruct=instruct,
-                    do_sample=True
+                    do_sample=True,
+                    top_p=top_p,
+                    temperature=temperature,
+                    repetition_penalty=repetition_penalty,
                 )
             
             if not wavs: continue
