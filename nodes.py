@@ -316,6 +316,7 @@ class Qwen3TTSStageManager:
                 "my_turn_interval": ("FLOAT", {"default": 0.5, "min": 0.0, "max": 5.0, "step": 0.1}),
             },
             "optional": {
+                "model": ("QWEN3_TTS_MODEL",),
                 "top_p": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 1.0, "step": 0.01}),
                 "temperature": ("FLOAT", {"default": 0.7, "min": 0.0, "max": 2.0, "step": 0.01}),
                 "repetition_penalty": ("FLOAT", {"default": 1.05, "min": 0.0, "max": 2.0, "step": 0.01}),
@@ -345,7 +346,10 @@ class Qwen3TTSStageManager:
         
         # Validation checks
         if model is None:
-             raise ValueError("Stage Manager needs a model!")
+             raise ValueError("Stage Manager needs a 'model'!")
+        
+        # Unified Model Mode: Use the single provided model for everything
+        voice_clone_worker = model
 
         model_type = model.model.tts_model_type
         print(f"StageManager loaded model type: {model_type}")
@@ -447,8 +451,6 @@ class Qwen3TTSStageManager:
             
         def get_tensor_props(t):
             return t.shape[1], t.shape[2] 
-
-        valid_line_count = 0
         
         # Prepare Audio for Cloning
         def process_ref_audio(audio_data):
@@ -464,6 +466,7 @@ class Qwen3TTSStageManager:
             if w_np.ndim > 1: w_np = w_np.flatten()
             return (w_np, sr)
 
+        valid_line_count = 0
         last_valid_role = None
 
         for i, line in enumerate(script_lines):
@@ -551,7 +554,8 @@ class Qwen3TTSStageManager:
             
             if is_clone_mode:
                 print(f"Generating Line {valid_line_count+1} [CLONE]: {role_name}")
-                wavs, output_sr = model.generate_voice_clone(
+                # Use voice_clone_worker (model)
+                wavs, output_sr = voice_clone_worker.generate_voice_clone(
                     text=content,
                     language="Auto",
                     ref_audio=ref_audio_obj,
