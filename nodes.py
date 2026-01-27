@@ -55,8 +55,11 @@ class Qwen3TTSLoader:
         if torch.cuda.is_available() and (device == "auto" or device == "cuda"):
             try:
                 import flash_attn
+                import importlib
+                # Check directly if version metadata is available, as transformers will error otherwise
+                importlib.metadata.version("flash_attn")
                 attn_impl = "flash_attention_2"
-            except ImportError:
+            except Exception:
                 pass
 
         model = Qwen3TTSModel.from_pretrained(
