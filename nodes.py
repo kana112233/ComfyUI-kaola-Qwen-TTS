@@ -6,6 +6,7 @@ import folder_paths
 from qwen_tts import Qwen3TTSModel
 import re
 import torchaudio
+import soundfile as sf
 
 # Add Qwen3-TTS related paths
 folder_paths.add_model_folder_path("qwen3_tts", os.path.join(folder_paths.models_dir, "qwen3_tts"))
@@ -683,12 +684,19 @@ class Qwen3TTSStageManager:
         if save_to_file:
             output_dir = folder_paths.get_output_directory()
             # Save Mix
-            torchaudio.save(os.path.join(output_dir, f"{filename_prefix}_MIX.wav"), final_mix[0], sample_rate)
+            # torchaudio.save(os.path.join(output_dir, f"{filename_prefix}_MIX.wav"), final_mix[0], sample_rate)
+            # Use soundfile to avoid libtorchcodec issues
+            mix_np = final_mix[0].transpose(0, 1).detach().cpu().numpy()
+            sf.write(os.path.join(output_dir, f"{filename_prefix}_MIX.wav"), mix_np, sample_rate)
+            
             # Save Roles
             for r_key, t in final_outputs.items():
                 safe_name = "".join([c for c in r_key if c.isalnum() or c in (' ', '_', '-')]).strip()
                 fname = f"{filename_prefix}_{safe_name}.wav"
-                torchaudio.save(os.path.join(output_dir, fname), t[0], sample_rate)
+                # torchaudio.save(os.path.join(output_dir, fname), t[0], sample_rate)
+                
+                role_np = t[0].transpose(0, 1).detach().cpu().numpy()
+                sf.write(os.path.join(output_dir, fname), role_np, sample_rate)
             print(f"Saved tracks to {output_dir}")
 
         srt_output = "\n".join(srt_lines)
