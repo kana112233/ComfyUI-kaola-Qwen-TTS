@@ -438,6 +438,56 @@ class Qwen3TTSStageManager:
         script_lines = script.strip().split('\n')
         print(f"DEBUG: Parsed {len(script_lines)} lines from script.")
 
+        # --- Pre-scan for missing roles ---
+        found_script_roles = set()
+        for line in script_lines:
+            line = line.strip()
+            if not line: continue
+            
+            # Re-use regex patterns defined later or define them here temporarily? 
+            # Better to lift regex definitions up or just duplicate/use local ones for this scan.
+            # Using simple check consistent with main loop logic.
+            # Main loop uses: ts_pattern and pattern. Let's move them up.
+            pass # Placeholder to just insert the block below correctly
+        
+        # Regex definitions moved up for pre-scan
+        ts_pattern = re.compile(r"^(\d+)\s+([0-9:,\.]+)\s*-{2,}>\s*([0-9:,\.]+)\s+(.+?)[:：]\s*(.+)$")
+        pattern = re.compile(r"^([^0-9\s].*?)[:：]\s*(.+)$")
+
+        for line in script_lines:
+            line = line.strip()
+            if not line: continue
+            
+            m_ts = ts_pattern.match(line)
+            m_std = pattern.match(line)
+            
+            r_found = None
+            if m_ts:
+                r_found = m_ts.group(4).strip()
+            elif m_std:
+                r_found = m_std.group(1).strip()
+            
+            if r_found:
+                found_script_roles.add(r_found)
+        
+        defined_roles_lower = {k.lower(): k for k in roles_config.keys()}
+        missing_roles = []
+        
+        for r in found_script_roles:
+            if r.lower() not in defined_roles_lower:
+                missing_roles.append(r)
+        
+        if missing_roles:
+            print(f"\n{'!'*40}")
+            print(f"WARNING: The following roles appear in the script but are NOT defined in Role Definitions:")
+            for mr in missing_roles:
+                print(f"  - '{mr}'")
+            print(f"Please add them to the 'Role Definitions' text box (e.g. {missing_roles[0]} [A]: description)")
+            print(f"{'!'*40}\n")
+        else:
+            print(f"DEBUG: All script roles are defined: {list(found_script_roles)}")
+        # ----------------------------------
+
         sample_rate = 24000 
         srt_lines = []
         
