@@ -1,151 +1,9 @@
 {
     "id": "2ad9f654-fc70-43bb-960c-0d94d57e843e",
     "revision": 0,
-    "last_node_id": 203,
-    "last_link_id": 66,
+    "last_node_id": 235,
+    "last_link_id": 118,
     "nodes": [
-        {
-            "id": 50,
-            "type": "Qwen3TTSVoiceDesign",
-            "pos": [
-                450,
-                550
-            ],
-            "size": [
-                350,
-                286
-            ],
-            "flags": {},
-            "order": 8,
-            "mode": 0,
-            "inputs": [
-                {
-                    "name": "model",
-                    "type": "QWEN3_TTS_MODEL",
-                    "link": 41
-                }
-            ],
-            "outputs": [
-                {
-                    "name": "AUDIO",
-                    "type": "AUDIO",
-                    "links": [
-                        52
-                    ]
-                }
-            ],
-            "properties": {
-                "cnr_id": "comfyui-kaola-qwen-tts",
-                "ver": "db38a8a82b4d9a895053e5ddbd4b45c147ac33bd",
-                "Node name for S&R": "Qwen3TTSVoiceDesign",
-                "ue_properties": {
-                    "widget_ue_connectable": {},
-                    "version": "7.5.2",
-                    "input_ue_unconnectable": {}
-                }
-            },
-            "widgets_values": [
-                "I am the Witch.",
-                "A cackling, sharp female voice.",
-                "Auto",
-                1,
-                0.7,
-                1.05,
-                1086619756906822,
-                "randomize"
-            ]
-        },
-        {
-            "id": 20,
-            "type": "Qwen3TTSVoiceDesign",
-            "pos": [
-                -164.64969259961956,
-                528.5362948398003
-            ],
-            "size": [
-                350,
-                286
-            ],
-            "flags": {},
-            "order": 6,
-            "mode": 0,
-            "inputs": [
-                {
-                    "name": "model",
-                    "type": "QWEN3_TTS_MODEL",
-                    "link": 21
-                }
-            ],
-            "outputs": [
-                {
-                    "name": "AUDIO",
-                    "type": "AUDIO",
-                    "links": [
-                        22
-                    ]
-                }
-            ],
-            "properties": {
-                "cnr_id": "comfyui-kaola-qwen-tts",
-                "ver": "db38a8a82b4d9a895053e5ddbd4b45c147ac33bd",
-                "Node name for S&R": "Qwen3TTSVoiceDesign",
-                "ue_properties": {
-                    "widget_ue_connectable": {},
-                    "version": "7.5.2",
-                    "input_ue_unconnectable": {}
-                }
-            },
-            "widgets_values": [
-                "I am the Villain.",
-                "A deep, raspy villain voice.",
-                "Auto",
-                1,
-                0.7,
-                1.05,
-                973230369207835,
-                "randomize"
-            ]
-        },
-        {
-            "id": 30,
-            "type": "LoadAudio",
-            "pos": [
-                -59.293213850648925,
-                902.226981706472
-            ],
-            "size": [
-                315,
-                136
-            ],
-            "flags": {},
-            "order": 0,
-            "mode": 0,
-            "inputs": [],
-            "outputs": [
-                {
-                    "name": "AUDIO",
-                    "type": "AUDIO",
-                    "links": [
-                        32
-                    ]
-                }
-            ],
-            "properties": {
-                "cnr_id": "comfy-core",
-                "ver": "0.9.2",
-                "Node name for S&R": "LoadAudio",
-                "ue_properties": {
-                    "widget_ue_connectable": {},
-                    "version": "7.5.2",
-                    "input_ue_unconnectable": {}
-                }
-            },
-            "widgets_values": [
-                "11-1.mp4",
-                null,
-                null
-            ]
-        },
         {
             "id": 200,
             "type": "Note",
@@ -158,7 +16,7 @@
                 88
             ],
             "flags": {},
-            "order": 1,
+            "order": 0,
             "mode": 0,
             "inputs": [],
             "outputs": [],
@@ -176,15 +34,870 @@
             "bgcolor": "#653"
         },
         {
-            "id": 100,
-            "type": "Qwen3TTSStageManager",
+            "id": 2,
+            "type": "Qwen3TTSLoader",
             "pos": [
-                900,
-                100
+                332.39871504567697,
+                -177.57999475250986
             ],
             "size": [
-                550,
-                900
+                300,
+                106
+            ],
+            "flags": {},
+            "order": 1,
+            "mode": 0,
+            "inputs": [],
+            "outputs": [
+                {
+                    "name": "model",
+                    "type": "QWEN3_TTS_MODEL",
+                    "links": [
+                        2,
+                        61
+                    ]
+                }
+            ],
+            "properties": {
+                "cnr_id": "comfyui-kaola-qwen-tts",
+                "ver": "db38a8a82b4d9a895053e5ddbd4b45c147ac33bd",
+                "Node name for S&R": "Qwen3TTSLoader",
+                "ue_properties": {
+                    "widget_ue_connectable": {},
+                    "version": "7.5.2",
+                    "input_ue_unconnectable": {}
+                }
+            },
+            "widgets_values": [
+                "Qwen/Qwen3-TTS-12Hz-1.7B-Base",
+                "bf16",
+                "auto"
+            ]
+        },
+        {
+            "id": 224,
+            "type": "Qwen3TTSRefAudio",
+            "pos": [
+                376.1273908307352,
+                1150.9777685225777
+            ],
+            "size": [
+                400,
+                200
+            ],
+            "flags": {},
+            "order": 14,
+            "mode": 0,
+            "inputs": [
+                {
+                    "name": "audio",
+                    "type": "AUDIO",
+                    "link": 98
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "AUDIO",
+                    "type": "AUDIO",
+                    "links": [
+                        107
+                    ]
+                }
+            ],
+            "properties": {
+                "cnr_id": "comfyui-kaola-qwen-tts",
+                "ver": "a522e5f10ac46f93646660d2faec3739b53abc1f",
+                "Node name for S&R": "Qwen3TTSRefAudio",
+                "ue_properties": {
+                    "widget_ue_connectable": {},
+                    "input_ue_unconnectable": {},
+                    "version": "7.5.2"
+                }
+            },
+            "widgets_values": [
+                "能不能让我扮演一会小太妹"
+            ]
+        },
+        {
+            "id": 227,
+            "type": "Qwen3TTSRefAudio",
+            "pos": [
+                385.66438882778834,
+                1568.5973654663544
+            ],
+            "size": [
+                400,
+                200
+            ],
+            "flags": {},
+            "order": 16,
+            "mode": 0,
+            "inputs": [
+                {
+                    "name": "audio",
+                    "type": "AUDIO",
+                    "link": 100
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "AUDIO",
+                    "type": "AUDIO",
+                    "links": [
+                        108
+                    ]
+                }
+            ],
+            "properties": {
+                "cnr_id": "comfyui-kaola-qwen-tts",
+                "ver": "a522e5f10ac46f93646660d2faec3739b53abc1f",
+                "Node name for S&R": "Qwen3TTSRefAudio",
+                "ue_properties": {
+                    "widget_ue_connectable": {},
+                    "input_ue_unconnectable": {},
+                    "version": "7.5.2"
+                }
+            },
+            "widgets_values": [
+                "能不能让我扮演一会小太妹"
+            ]
+        },
+        {
+            "id": 230,
+            "type": "Qwen3TTSRefAudio",
+            "pos": [
+                383.23642600611845,
+                1946.1206051946515
+            ],
+            "size": [
+                400,
+                200
+            ],
+            "flags": {},
+            "order": 18,
+            "mode": 0,
+            "inputs": [
+                {
+                    "name": "audio",
+                    "type": "AUDIO",
+                    "link": 102
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "AUDIO",
+                    "type": "AUDIO",
+                    "links": [
+                        109
+                    ]
+                }
+            ],
+            "properties": {
+                "cnr_id": "comfyui-kaola-qwen-tts",
+                "ver": "a522e5f10ac46f93646660d2faec3739b53abc1f",
+                "Node name for S&R": "Qwen3TTSRefAudio",
+                "ue_properties": {
+                    "widget_ue_connectable": {},
+                    "input_ue_unconnectable": {},
+                    "version": "7.5.2"
+                }
+            },
+            "widgets_values": [
+                "能不能让我扮演一会小太妹"
+            ]
+        },
+        {
+            "id": 234,
+            "type": "Qwen3TTSRefAudio",
+            "pos": [
+                1670.7257597399985,
+                1508.901130817824
+            ],
+            "size": [
+                400,
+                200
+            ],
+            "flags": {},
+            "order": 21,
+            "mode": 0,
+            "inputs": [
+                {
+                    "name": "audio",
+                    "type": "AUDIO",
+                    "link": 111
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "AUDIO",
+                    "type": "AUDIO",
+                    "links": [
+                        112
+                    ]
+                }
+            ],
+            "properties": {
+                "cnr_id": "comfyui-kaola-qwen-tts",
+                "ver": "a522e5f10ac46f93646660d2faec3739b53abc1f",
+                "Node name for S&R": "Qwen3TTSRefAudio",
+                "ue_properties": {
+                    "widget_ue_connectable": {},
+                    "input_ue_unconnectable": {},
+                    "version": "7.5.2"
+                }
+            },
+            "widgets_values": [
+                "能不能让我扮演一会小太妹"
+            ]
+        },
+        {
+            "id": 229,
+            "type": "Qwen3TTSVoiceDesign",
+            "pos": [
+                -380.53114302830454,
+                1905.5195186470291
+            ],
+            "size": [
+                400,
+                286
+            ],
+            "flags": {},
+            "order": 7,
+            "mode": 0,
+            "inputs": [
+                {
+                    "name": "model",
+                    "type": "QWEN3_TTS_MODEL",
+                    "link": 106
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "AUDIO",
+                    "type": "AUDIO",
+                    "links": [
+                        102,
+                        103
+                    ]
+                }
+            ],
+            "properties": {
+                "cnr_id": "comfyui-kaola-qwen-tts",
+                "ver": "75b666b877ed77610b73d62bbf26920fa4991053",
+                "Node name for S&R": "Qwen3TTSVoiceDesign",
+                "ue_properties": {
+                    "widget_ue_connectable": {},
+                    "input_ue_unconnectable": {},
+                    "version": "7.5.2"
+                }
+            },
+            "widgets_values": [
+                "能不能让我扮演一会小太妹",
+                "一个20岁玉女的 撒娇",
+                "Auto",
+                1,
+                0.71,
+                1.05,
+                47782793553964,
+                "fixed"
+            ]
+        },
+        {
+            "id": 232,
+            "type": "Qwen3TTSVoiceDesign",
+            "pos": [
+                947.107868964843,
+                1468.3000442702016
+            ],
+            "size": [
+                400,
+                286
+            ],
+            "flags": {},
+            "order": 8,
+            "mode": 0,
+            "inputs": [
+                {
+                    "name": "model",
+                    "type": "QWEN3_TTS_MODEL",
+                    "link": 114
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "AUDIO",
+                    "type": "AUDIO",
+                    "links": [
+                        110,
+                        111
+                    ]
+                }
+            ],
+            "properties": {
+                "cnr_id": "comfyui-kaola-qwen-tts",
+                "ver": "75b666b877ed77610b73d62bbf26920fa4991053",
+                "Node name for S&R": "Qwen3TTSVoiceDesign",
+                "ue_properties": {
+                    "widget_ue_connectable": {},
+                    "input_ue_unconnectable": {},
+                    "version": "7.5.2"
+                }
+            },
+            "widgets_values": [
+                "能不能让我扮演一会小太妹",
+                "一个很污的小女人 动漫",
+                "Auto",
+                1,
+                0.72,
+                1.05,
+                47782793553966,
+                "fixed"
+            ]
+        },
+        {
+            "id": 226,
+            "type": "Qwen3TTSVoiceDesign",
+            "pos": [
+                -378.10318020663465,
+                1527.9962789187318
+            ],
+            "size": [
+                400,
+                286
+            ],
+            "flags": {},
+            "order": 6,
+            "mode": 0,
+            "inputs": [
+                {
+                    "name": "model",
+                    "type": "QWEN3_TTS_MODEL",
+                    "link": 105
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "AUDIO",
+                    "type": "AUDIO",
+                    "links": [
+                        100,
+                        115
+                    ]
+                }
+            ],
+            "properties": {
+                "cnr_id": "comfyui-kaola-qwen-tts",
+                "ver": "75b666b877ed77610b73d62bbf26920fa4991053",
+                "Node name for S&R": "Qwen3TTSVoiceDesign",
+                "ue_properties": {
+                    "widget_ue_connectable": {},
+                    "input_ue_unconnectable": {},
+                    "version": "7.5.2"
+                }
+            },
+            "widgets_values": [
+                "能不能让我扮演一会小太妹",
+                "一个攻击性很强的二次元萌妹子 声音和贱",
+                "Auto",
+                1,
+                0.7,
+                1.05,
+                47782793553964,
+                "fixed"
+            ]
+        },
+        {
+            "id": 223,
+            "type": "Qwen3TTSVoiceDesign",
+            "pos": [
+                -387.6401782036878,
+                1110.376681974955
+            ],
+            "size": [
+                400,
+                286
+            ],
+            "flags": {},
+            "order": 5,
+            "mode": 0,
+            "inputs": [
+                {
+                    "name": "model",
+                    "type": "QWEN3_TTS_MODEL",
+                    "link": 104
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "AUDIO",
+                    "type": "AUDIO",
+                    "links": [
+                        98,
+                        99
+                    ]
+                }
+            ],
+            "properties": {
+                "cnr_id": "comfyui-kaola-qwen-tts",
+                "ver": "75b666b877ed77610b73d62bbf26920fa4991053",
+                "Node name for S&R": "Qwen3TTSVoiceDesign",
+                "ue_properties": {
+                    "widget_ue_connectable": {},
+                    "input_ue_unconnectable": {},
+                    "version": "7.5.2"
+                }
+            },
+            "widgets_values": [
+                "能不能让我扮演一会小太妹",
+                "一个15岁小萝莉的 可爱 声音很粗",
+                "Auto",
+                1,
+                0.7,
+                1.05,
+                47782793553963,
+                "fixed"
+            ]
+        },
+        {
+            "id": 216,
+            "type": "Qwen3TTSLoader",
+            "pos": [
+                -776.1765036117018,
+                652.7603136291909
+            ],
+            "size": [
+                300,
+                106
+            ],
+            "flags": {},
+            "order": 2,
+            "mode": 0,
+            "inputs": [],
+            "outputs": [
+                {
+                    "name": "model",
+                    "type": "QWEN3_TTS_MODEL",
+                    "links": [
+                        87,
+                        90,
+                        104,
+                        105,
+                        106,
+                        114,
+                        117
+                    ]
+                }
+            ],
+            "properties": {
+                "cnr_id": "comfyui-kaola-qwen-tts",
+                "ver": "db38a8a82b4d9a895053e5ddbd4b45c147ac33bd",
+                "Node name for S&R": "Qwen3TTSLoader",
+                "ue_properties": {
+                    "widget_ue_connectable": {},
+                    "version": "7.5.2",
+                    "input_ue_unconnectable": {}
+                }
+            },
+            "widgets_values": [
+                "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+                "bf16",
+                "auto"
+            ]
+        },
+        {
+            "id": 203,
+            "type": "easy showAnything",
+            "pos": [
+                1526.5090530463463,
+                743.4987309820602
+            ],
+            "size": [
+                360.955838768956,
+                513.549247309596
+            ],
+            "flags": {},
+            "order": 29,
+            "mode": 0,
+            "inputs": [
+                {
+                    "label": "输入任何",
+                    "name": "anything",
+                    "shape": 7,
+                    "type": "*",
+                    "link": 64
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "output",
+                    "type": "*",
+                    "links": []
+                }
+            ],
+            "title": "字幕 srt",
+            "properties": {
+                "cnr_id": "comfyui-easy-use",
+                "ver": "125b3a4905ac9367f7aae5c2df67e2282f0a3d37",
+                "Node name for S&R": "easy showAnything",
+                "ue_properties": {
+                    "widget_ue_connectable": {},
+                    "input_ue_unconnectable": {},
+                    "version": "7.4.1"
+                },
+                "widget_ue_connectable": {}
+            },
+            "widgets_values": [
+                "1\n00:00:00,006 --> 00:00:01,996\nspeaker6: 哈哈哈哈哈\n\n2\n00:00:00,006 --> 00:00:01,277\nspeaker7: 哈哈哈哈哈\n\n3\n00:00:00,006 --> 00:00:01,200\nspeaker5: 哈哈哈哈哈\n"
+            ],
+            "color": "#223",
+            "bgcolor": "#335"
+        },
+        {
+            "id": 221,
+            "type": "SaveAudio",
+            "pos": [
+                1863.3552666566186,
+                280.14983817250413
+            ],
+            "size": [
+                300,
+                112
+            ],
+            "flags": {},
+            "order": 28,
+            "mode": 0,
+            "inputs": [
+                {
+                    "name": "audio",
+                    "type": "AUDIO",
+                    "link": 94
+                }
+            ],
+            "outputs": [],
+            "title": "Save Audio (FLAC) 角色C单轨道",
+            "properties": {
+                "cnr_id": "comfy-core",
+                "ver": "0.9.2",
+                "Node name for S&R": "SaveAudio",
+                "ue_properties": {
+                    "widget_ue_connectable": {},
+                    "version": "7.5.2",
+                    "input_ue_unconnectable": {}
+                }
+            },
+            "widgets_values": [
+                "full_studio_c"
+            ]
+        },
+        {
+            "id": 220,
+            "type": "SaveAudio",
+            "pos": [
+                1530.4700293790213,
+                286.5321987209756
+            ],
+            "size": [
+                300,
+                112
+            ],
+            "flags": {},
+            "order": 27,
+            "mode": 0,
+            "inputs": [
+                {
+                    "name": "audio",
+                    "type": "AUDIO",
+                    "link": 93
+                }
+            ],
+            "outputs": [],
+            "title": "Save Audio (FLAC) 角色B单轨道",
+            "properties": {
+                "cnr_id": "comfy-core",
+                "ver": "0.9.2",
+                "Node name for S&R": "SaveAudio",
+                "ue_properties": {
+                    "widget_ue_connectable": {},
+                    "version": "7.5.2",
+                    "input_ue_unconnectable": {}
+                }
+            },
+            "widgets_values": [
+                "full_studio_b"
+            ]
+        },
+        {
+            "id": 205,
+            "type": "Qwen3TTSRefAudio",
+            "pos": [
+                380.02168377875154,
+                56.929665374549856
+            ],
+            "size": [
+                400,
+                200
+            ],
+            "flags": {},
+            "order": 23,
+            "mode": 0,
+            "inputs": [
+                {
+                    "name": "audio",
+                    "type": "AUDIO",
+                    "link": 118
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "AUDIO",
+                    "type": "AUDIO",
+                    "links": [
+                        70,
+                        78
+                    ]
+                }
+            ],
+            "properties": {
+                "cnr_id": "comfyui-kaola-qwen-tts",
+                "ver": "a522e5f10ac46f93646660d2faec3739b53abc1f",
+                "Node name for S&R": "Qwen3TTSRefAudio",
+                "ue_properties": {
+                    "widget_ue_connectable": {},
+                    "input_ue_unconnectable": {},
+                    "version": "7.5.2"
+                }
+            },
+            "widgets_values": [
+                "能不能让我扮演一会小太妹"
+            ]
+        },
+        {
+            "id": 225,
+            "type": "PreviewAudio",
+            "pos": [
+                55.07169078383844,
+                1223.8358739246173
+            ],
+            "size": [
+                270,
+                88
+            ],
+            "flags": {},
+            "order": 15,
+            "mode": 0,
+            "inputs": [
+                {
+                    "name": "audio",
+                    "type": "AUDIO",
+                    "link": 99
+                }
+            ],
+            "outputs": [],
+            "properties": {
+                "cnr_id": "comfy-core",
+                "ver": "0.11.0",
+                "Node name for S&R": "PreviewAudio",
+                "ue_properties": {
+                    "widget_ue_connectable": {},
+                    "input_ue_unconnectable": {},
+                    "version": "7.5.2"
+                }
+            },
+            "widgets_values": []
+        },
+        {
+            "id": 228,
+            "type": "PreviewAudio",
+            "pos": [
+                63.488119830683296,
+                1643.8507611111675
+            ],
+            "size": [
+                270,
+                88
+            ],
+            "flags": {},
+            "order": 17,
+            "mode": 0,
+            "inputs": [
+                {
+                    "name": "audio",
+                    "type": "AUDIO",
+                    "link": 115
+                }
+            ],
+            "outputs": [],
+            "properties": {
+                "cnr_id": "comfy-core",
+                "ver": "0.11.0",
+                "Node name for S&R": "PreviewAudio",
+                "ue_properties": {
+                    "widget_ue_connectable": {},
+                    "input_ue_unconnectable": {},
+                    "version": "7.5.2"
+                }
+            },
+            "widgets_values": []
+        },
+        {
+            "id": 231,
+            "type": "PreviewAudio",
+            "pos": [
+                62.18072595922171,
+                2018.9787105966916
+            ],
+            "size": [
+                270,
+                88
+            ],
+            "flags": {},
+            "order": 19,
+            "mode": 0,
+            "inputs": [
+                {
+                    "name": "audio",
+                    "type": "AUDIO",
+                    "link": 103
+                }
+            ],
+            "outputs": [],
+            "properties": {
+                "cnr_id": "comfy-core",
+                "ver": "0.11.0",
+                "Node name for S&R": "PreviewAudio",
+                "ue_properties": {
+                    "widget_ue_connectable": {},
+                    "input_ue_unconnectable": {},
+                    "version": "7.5.2"
+                }
+            },
+            "widgets_values": []
+        },
+        {
+            "id": 233,
+            "type": "PreviewAudio",
+            "pos": [
+                1370.9279911006133,
+                1663.40068830647
+            ],
+            "size": [
+                270,
+                88
+            ],
+            "flags": {},
+            "order": 20,
+            "mode": 0,
+            "inputs": [
+                {
+                    "name": "audio",
+                    "type": "AUDIO",
+                    "link": 110
+                }
+            ],
+            "outputs": [],
+            "properties": {
+                "cnr_id": "comfy-core",
+                "ver": "0.11.0",
+                "Node name for S&R": "PreviewAudio",
+                "ue_properties": {
+                    "widget_ue_connectable": {},
+                    "input_ue_unconnectable": {},
+                    "version": "7.5.2"
+                }
+            },
+            "widgets_values": []
+        },
+        {
+            "id": 201,
+            "type": "SaveAudio",
+            "pos": [
+                1532.1236675261,
+                95.3931576830578
+            ],
+            "size": [
+                300,
+                112
+            ],
+            "flags": {},
+            "order": 26,
+            "mode": 0,
+            "inputs": [
+                {
+                    "name": "audio",
+                    "type": "AUDIO",
+                    "link": 63
+                }
+            ],
+            "outputs": [],
+            "title": "Save Audio (FLAC) 角色A单轨道",
+            "properties": {
+                "cnr_id": "comfy-core",
+                "ver": "0.9.2",
+                "Node name for S&R": "SaveAudio",
+                "ue_properties": {
+                    "widget_ue_connectable": {},
+                    "version": "7.5.2",
+                    "input_ue_unconnectable": {}
+                }
+            },
+            "widgets_values": [
+                "full_studio_a"
+            ]
+        },
+        {
+            "id": 214,
+            "type": "Qwen3TTSRefAudio",
+            "pos": [
+                338.8293521943244,
+                747.451511530839
+            ],
+            "size": [
+                400,
+                200
+            ],
+            "flags": {},
+            "order": 10,
+            "mode": 0,
+            "inputs": [
+                {
+                    "name": "audio",
+                    "type": "AUDIO",
+                    "link": 88
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "AUDIO",
+                    "type": "AUDIO",
+                    "links": [
+                        97
+                    ]
+                }
+            ],
+            "properties": {
+                "cnr_id": "comfyui-kaola-qwen-tts",
+                "ver": "a522e5f10ac46f93646660d2faec3739b53abc1f",
+                "Node name for S&R": "Qwen3TTSRefAudio",
+                "ue_properties": {
+                    "widget_ue_connectable": {},
+                    "input_ue_unconnectable": {},
+                    "version": "7.5.2"
+                }
+            },
+            "widgets_values": [
+                "能不能让我扮演一会小太妹"
+            ]
+        },
+        {
+            "id": 235,
+            "type": "Qwen3TTSVoiceDesign",
+            "pos": [
+                -345.22829736265936,
+                -68.15167168796249
+            ],
+            "size": [
+                400,
+                286
             ],
             "flags": {},
             "order": 9,
@@ -192,7 +905,345 @@
             "inputs": [
                 {
                     "name": "model",
-                    "shape": 7,
+                    "type": "QWEN3_TTS_MODEL",
+                    "link": 117
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "AUDIO",
+                    "type": "AUDIO",
+                    "links": [
+                        116,
+                        118
+                    ]
+                }
+            ],
+            "properties": {
+                "cnr_id": "comfyui-kaola-qwen-tts",
+                "ver": "75b666b877ed77610b73d62bbf26920fa4991053",
+                "Node name for S&R": "Qwen3TTSVoiceDesign",
+                "ue_properties": {
+                    "widget_ue_connectable": {},
+                    "input_ue_unconnectable": {},
+                    "version": "7.5.2"
+                }
+            },
+            "widgets_values": [
+                "能不能让我扮演一会小太妹",
+                "一个很严肃 生气的 情绪激动 淑女   小妹子",
+                "Auto",
+                1,
+                0.7,
+                1.05,
+                1050998344022405,
+                "fixed"
+            ]
+        },
+        {
+            "id": 222,
+            "type": "PreviewAudio",
+            "pos": [
+                76.10649650872766,
+                120.30070884735633
+            ],
+            "size": [
+                270,
+                88
+            ],
+            "flags": {},
+            "order": 22,
+            "mode": 0,
+            "inputs": [
+                {
+                    "name": "audio",
+                    "type": "AUDIO",
+                    "link": 116
+                }
+            ],
+            "outputs": [],
+            "properties": {
+                "cnr_id": "comfy-core",
+                "ver": "0.11.0",
+                "Node name for S&R": "PreviewAudio",
+                "ue_properties": {
+                    "widget_ue_connectable": {},
+                    "input_ue_unconnectable": {},
+                    "version": "7.5.2"
+                }
+            },
+            "widgets_values": []
+        },
+        {
+            "id": 217,
+            "type": "Qwen3TTSVoiceDesign",
+            "pos": [
+                -393.8369149174702,
+                708.9217663458664
+            ],
+            "size": [
+                400,
+                286
+            ],
+            "flags": {},
+            "order": 3,
+            "mode": 0,
+            "inputs": [
+                {
+                    "name": "model",
+                    "type": "QWEN3_TTS_MODEL",
+                    "link": 87
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "AUDIO",
+                    "type": "AUDIO",
+                    "links": [
+                        88,
+                        89
+                    ]
+                }
+            ],
+            "properties": {
+                "cnr_id": "comfyui-kaola-qwen-tts",
+                "ver": "75b666b877ed77610b73d62bbf26920fa4991053",
+                "Node name for S&R": "Qwen3TTSVoiceDesign",
+                "ue_properties": {
+                    "widget_ue_connectable": {},
+                    "input_ue_unconnectable": {},
+                    "version": "7.5.2"
+                }
+            },
+            "widgets_values": [
+                "能不能让我扮演一会小太妹",
+                "一个15岁小萝莉的 可爱",
+                "Auto",
+                1,
+                0.7,
+                1.05,
+                47782793553960,
+                "fixed"
+            ]
+        },
+        {
+            "id": 218,
+            "type": "Qwen3TTSVoiceDesign",
+            "pos": [
+                -354.56319491178834,
+                307.3922678352558
+            ],
+            "size": [
+                400,
+                286
+            ],
+            "flags": {},
+            "order": 4,
+            "mode": 0,
+            "inputs": [
+                {
+                    "name": "model",
+                    "type": "QWEN3_TTS_MODEL",
+                    "link": 90
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "AUDIO",
+                    "type": "AUDIO",
+                    "links": [
+                        91,
+                        92
+                    ]
+                }
+            ],
+            "properties": {
+                "cnr_id": "comfyui-kaola-qwen-tts",
+                "ver": "75b666b877ed77610b73d62bbf26920fa4991053",
+                "Node name for S&R": "Qwen3TTSVoiceDesign",
+                "ue_properties": {
+                    "widget_ue_connectable": {},
+                    "input_ue_unconnectable": {},
+                    "version": "7.5.2"
+                }
+            },
+            "widgets_values": [
+                "能不能让我扮演一会小太妹",
+                "一个御姐的 严肃  说话很慢",
+                "Auto",
+                1,
+                0.7,
+                1.05,
+                1050998344022405,
+                "fixed"
+            ]
+        },
+        {
+            "id": 211,
+            "type": "Qwen3TTSRefAudio",
+            "pos": [
+                367.33980295166333,
+                339.9747006251985
+            ],
+            "size": [
+                400,
+                200
+            ],
+            "flags": {},
+            "order": 13,
+            "mode": 0,
+            "inputs": [
+                {
+                    "name": "audio",
+                    "type": "AUDIO",
+                    "link": 92
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "AUDIO",
+                    "type": "AUDIO",
+                    "links": [
+                        96
+                    ]
+                }
+            ],
+            "properties": {
+                "cnr_id": "comfyui-kaola-qwen-tts",
+                "ver": "a522e5f10ac46f93646660d2faec3739b53abc1f",
+                "Node name for S&R": "Qwen3TTSRefAudio",
+                "ue_properties": {
+                    "widget_ue_connectable": {},
+                    "input_ue_unconnectable": {},
+                    "version": "7.5.2"
+                }
+            },
+            "widgets_values": [
+                "能不能让我扮演一会小太妹"
+            ]
+        },
+        {
+            "id": 219,
+            "type": "PreviewAudio",
+            "pos": [
+                66.42881484508713,
+                557.1660883294287
+            ],
+            "size": [
+                270,
+                88
+            ],
+            "flags": {},
+            "order": 12,
+            "mode": 0,
+            "inputs": [
+                {
+                    "name": "audio",
+                    "type": "AUDIO",
+                    "link": 91
+                }
+            ],
+            "outputs": [],
+            "properties": {
+                "cnr_id": "comfy-core",
+                "ver": "0.11.0",
+                "Node name for S&R": "PreviewAudio",
+                "ue_properties": {
+                    "widget_ue_connectable": {},
+                    "input_ue_unconnectable": {},
+                    "version": "7.5.2"
+                }
+            },
+            "widgets_values": []
+        },
+        {
+            "id": 215,
+            "type": "PreviewAudio",
+            "pos": [
+                48.87495407005604,
+                822.3809582955288
+            ],
+            "size": [
+                270,
+                88
+            ],
+            "flags": {},
+            "order": 11,
+            "mode": 0,
+            "inputs": [
+                {
+                    "name": "audio",
+                    "type": "AUDIO",
+                    "link": 89
+                }
+            ],
+            "outputs": [],
+            "properties": {
+                "cnr_id": "comfy-core",
+                "ver": "0.11.0",
+                "Node name for S&R": "PreviewAudio",
+                "ue_properties": {
+                    "widget_ue_connectable": {},
+                    "input_ue_unconnectable": {},
+                    "version": "7.5.2"
+                }
+            },
+            "widgets_values": []
+        },
+        {
+            "id": 101,
+            "type": "SaveAudio",
+            "pos": [
+                1526.6705204081404,
+                -91.7587772127775
+            ],
+            "size": [
+                300,
+                112
+            ],
+            "flags": {},
+            "order": 25,
+            "mode": 0,
+            "inputs": [
+                {
+                    "name": "audio",
+                    "type": "AUDIO",
+                    "link": 113
+                }
+            ],
+            "outputs": [],
+            "title": "Save Audio (FLAC) 所有人音频",
+            "properties": {
+                "cnr_id": "comfy-core",
+                "ver": "0.9.2",
+                "Node name for S&R": "SaveAudio",
+                "ue_properties": {
+                    "widget_ue_connectable": {},
+                    "version": "7.5.2",
+                    "input_ue_unconnectable": {}
+                }
+            },
+            "widgets_values": [
+                "full_studio_mix"
+            ]
+        },
+        {
+            "id": 100,
+            "type": "Qwen3TTSStageManager",
+            "pos": [
+                869.6826001114903,
+                51.05313857071104
+            ],
+            "size": [
+                550,
+                900
+            ],
+            "flags": {},
+            "order": 24,
+            "mode": 0,
+            "inputs": [
+                {
+                    "name": "model",
                     "type": "QWEN3_TTS_MODEL",
                     "link": 61
                 },
@@ -200,43 +1251,43 @@
                     "name": "role_A_audio",
                     "shape": 7,
                     "type": "AUDIO",
-                    "link": 66
+                    "link": 78
                 },
                 {
                     "name": "role_B_audio",
                     "shape": 7,
                     "type": "AUDIO",
-                    "link": 22
+                    "link": 97
                 },
                 {
                     "name": "role_C_audio",
                     "shape": 7,
                     "type": "AUDIO",
-                    "link": 32
+                    "link": 96
                 },
                 {
                     "name": "role_D_audio",
                     "shape": 7,
                     "type": "AUDIO",
-                    "link": 42
+                    "link": 107
                 },
                 {
                     "name": "role_E_audio",
                     "shape": 7,
                     "type": "AUDIO",
-                    "link": 52
+                    "link": 108
                 },
                 {
                     "name": "role_F_audio",
                     "shape": 7,
                     "type": "AUDIO",
-                    "link": 65
+                    "link": 109
                 },
                 {
                     "name": "role_G_audio",
                     "shape": 7,
                     "type": "AUDIO",
-                    "link": 72
+                    "link": 112
                 }
             ],
             "outputs": [
@@ -244,7 +1295,8 @@
                     "name": "audio_mix",
                     "type": "AUDIO",
                     "links": [
-                        101
+                        101,
+                        113
                     ]
                 },
                 {
@@ -258,12 +1310,16 @@
                 {
                     "name": "audio_role_B",
                     "type": "AUDIO",
-                    "links": null
+                    "links": [
+                        93
+                    ]
                 },
                 {
                     "name": "audio_role_C",
                     "type": "AUDIO",
-                    "links": null
+                    "links": [
+                        94
+                    ]
                 },
                 {
                     "name": "audio_role_D",
@@ -304,526 +1360,31 @@
                 }
             },
             "widgets_values": [
-                "Narrator: The gathering begins.\nHero: I have arrived!\nVillain: You are too late.\nWizard: Magic is never late.\nWitch: But curses are early!\nRobot: Logic error detected.\nGhost: I am watching you all...",
-                "Hero [A]: Mapped to Input A\nVillain [B]: Mapped to Input B\nNarrator [C]: Mapped to Input C\nWizard [D]: Mapped to Input D\nWitch [E]: Mapped to Input E\nRobot [F]: Mapped to Input F\nGhost [G]: Mapped to Input G",
+                "1 00:00:00,006 --> 00:00:10,008 speaker0: 砸了！你们砸了！兔子都知道不吃窝边草。六个人还当着人家丈夫，还让人看？呸！\n\n2 00:00:10,008 --> 00:00:13,039 speaker0: 恶心！我都关着灯！\n\n3 00:00:13,079 --> 00:00:21,053 speaker0: 这种事你们可以花点钱嘛，花点！哪怕嫖呢？花不了多少钱！\n\n4 00:00:21,053 --> 00:00:25,087 speaker0: 哪怕偷偷摸摸的，简直就是土匪！   土匪都不如！\n\n5 00:00:25,087 --> 00:00:32,045 speaker0: 还说让人家百姓念你们好？就是一句话：恶心！\n\n6 00:00:32,045 --> 00:00:43,066 speaker0: 钱肯定是挣不着了，恶心！恶心！恶心呐！恶心！呸！太恶心！\n\n7 00:00:52,054 --> 00:00:59,066 speaker3: 大哥你是了解我的，我从来不做仗势欺人的事，我喜欢被动。\n\n8 00:01:00,024 --> 00:01:06,095 speaker4: 大哥你是了解我的，以我的习惯，万事不求人。\n\n9 00:01:07,059 --> 00:01:14,062 speaker5: 大哥你是了解我的，如果是我，不会有人活着来告状。\n\n10 00:01:15,026 --> 00:01:21,028 speaker6: 大哥你是了解我的，我老五虽然岁数最大，我……我至今……\n\n11 00:01:22,046 --> 00:01:24,070 speaker6: 俗称——处男。\n\n12 00:01:28,016 --> 00:01:31,093 speaker7: 别看着我呀！大哥你是了解我的。\n\n13 00:01:31,100 --> 00:01:38,028 speaker7: 如果我出手，那趴在桌上的应该是她老公。\n\n14 00:01:42,086 --> 00:01:47,052 speaker2: 我听出来了，你们都个个身怀绝技。",
+                "speaker0 [A]: Mapped to Input A\nspeaker7 [B]: Mapped to Input B\nspeaker2 [C]: Mapped to Input C\nspeaker3 [D]: Mapped to Input D\nspeaker4 [E]: Mapped to Input E\nspeaker5 [F]: Mapped to Input F\nspeaker6 [G]: Mapped to Input G",
                 0.5,
                 1,
                 0.7,
                 1.05,
                 0,
                 true,
-                "studio_mix",
-                "stage_manager"
-            ]
-        },
-        {
-            "id": 70,
-            "type": "Qwen3TTSVoiceDesign",
-            "pos": [
-                448.52075092685476,
-                1118.3485230284473
-            ],
-            "size": [
-                350,
-                286
-            ],
-            "flags": {},
-            "order": 13,
-            "mode": 0,
-            "inputs": [
-                {
-                    "name": "model",
-                    "type": "QWEN3_TTS_MODEL",
-                    "link": 51
-                }
-            ],
-            "outputs": [
-                {
-                    "name": "AUDIO",
-                    "type": "AUDIO",
-                    "links": [
-                        72
-                    ]
-                }
-            ],
-            "properties": {
-                "cnr_id": "comfyui-kaola-qwen-tts",
-                "ver": "db38a8a82b4d9a895053e5ddbd4b45c147ac33bd",
-                "Node name for S&R": "Qwen3TTSVoiceDesign",
-                "ue_properties": {
-                    "widget_ue_connectable": {},
-                    "version": "7.5.2",
-                    "input_ue_unconnectable": {}
-                }
-            },
-            "widgets_values": [
-                "I am the Ghost.",
-                "A whispering, echoey voice.",
-                "Auto",
-                1,
-                0.7,
-                1.05,
-                1091446762404509,
-                "randomize"
-            ]
-        },
-        {
-            "id": 40,
-            "type": "Qwen3TTSVoiceDesign",
-            "pos": [
-                409.91956596690113,
-                278.81787485747384
-            ],
-            "size": [
-                350,
-                286
-            ],
-            "flags": {},
-            "order": 7,
-            "mode": 0,
-            "inputs": [
-                {
-                    "name": "model",
-                    "type": "QWEN3_TTS_MODEL",
-                    "link": 31
-                }
-            ],
-            "outputs": [
-                {
-                    "name": "AUDIO",
-                    "type": "AUDIO",
-                    "links": [
-                        42
-                    ]
-                }
-            ],
-            "properties": {
-                "cnr_id": "comfyui-kaola-qwen-tts",
-                "ver": "db38a8a82b4d9a895053e5ddbd4b45c147ac33bd",
-                "Node name for S&R": "Qwen3TTSVoiceDesign",
-                "ue_properties": {
-                    "widget_ue_connectable": {},
-                    "version": "7.5.2",
-                    "input_ue_unconnectable": {}
-                }
-            },
-            "widgets_values": [
-                "I am the Wizard.",
-                "A wise, shaky old man voice.",
-                "Auto",
-                1,
-                0.7,
-                1.05,
-                903761940293200,
-                "randomize"
-            ]
-        },
-        {
-            "id": 60,
-            "type": "LoadAudio",
-            "pos": [
-                426.4222129438922,
-                893.5534840650142
-            ],
-            "size": [
-                315,
-                136
-            ],
-            "flags": {},
-            "order": 2,
-            "mode": 0,
-            "inputs": [],
-            "outputs": [
-                {
-                    "name": "AUDIO",
-                    "type": "AUDIO",
-                    "links": [
-                        62,
-                        65
-                    ]
-                }
-            ],
-            "properties": {
-                "cnr_id": "comfy-core",
-                "ver": "0.9.2",
-                "Node name for S&R": "LoadAudio",
-                "ue_properties": {
-                    "widget_ue_connectable": {},
-                    "version": "7.5.2",
-                    "input_ue_unconnectable": {}
-                }
-            },
-            "widgets_values": [
-                "11-1.mp4",
-                null,
-                null
-            ]
-        },
-        {
-            "id": 10,
-            "type": "Qwen3TTSVoiceDesign",
-            "pos": [
-                -67.02077260692003,
-                131.93576695063317
-            ],
-            "size": [
-                350,
-                286
-            ],
-            "flags": {},
-            "order": 5,
-            "mode": 0,
-            "inputs": [
-                {
-                    "name": "model",
-                    "type": "QWEN3_TTS_MODEL",
-                    "link": 11
-                }
-            ],
-            "outputs": [
-                {
-                    "name": "AUDIO",
-                    "type": "AUDIO",
-                    "links": [
-                        12,
-                        66
-                    ]
-                }
-            ],
-            "properties": {
-                "cnr_id": "comfyui-kaola-qwen-tts",
-                "ver": "db38a8a82b4d9a895053e5ddbd4b45c147ac33bd",
-                "Node name for S&R": "Qwen3TTSVoiceDesign",
-                "ue_properties": {
-                    "widget_ue_connectable": {},
-                    "version": "7.5.2",
-                    "input_ue_unconnectable": {}
-                }
-            },
-            "widgets_values": [
-                "I am the Hero.",
-                "A brave young hero voice.",
-                "Auto",
-                1,
-                0.7,
-                1.05,
-                994216069686246,
-                "randomize"
-            ]
-        },
-        {
-            "id": 203,
-            "type": "easy showAnything",
-            "pos": [
-                1535.6816432079381,
-                477.6580370728811
-            ],
-            "size": [
-                360.955838768956,
-                513.549247309596
-            ],
-            "flags": {},
-            "order": 12,
-            "mode": 0,
-            "inputs": [
-                {
-                    "label": "输入任何",
-                    "name": "anything",
-                    "shape": 7,
-                    "type": "*",
-                    "link": 64
-                }
-            ],
-            "outputs": [
-                {
-                    "name": "output",
-                    "type": "*",
-                    "links": []
-                }
-            ],
-            "title": "字幕 srt",
-            "properties": {
-                "cnr_id": "comfyui-easy-use",
-                "ver": "125b3a4905ac9367f7aae5c2df67e2282f0a3d37",
-                "Node name for S&R": "easy showAnything",
-                "ue_properties": {
-                    "widget_ue_connectable": {},
-                    "input_ue_unconnectable": {},
-                    "version": "7.4.1"
-                },
-                "widget_ue_connectable": {}
-            },
-            "widgets_values": [
-                "1\n00:00:00,000 --> 00:00:01,976\nNarrator: The gathering begins.\n\n2\n00:00:02,476 --> 00:00:03,813\nHero: I have arrived!\n\n3\n00:00:04,313 --> 00:00:05,570\nVillain: You are too late.\n\n4\n00:00:06,070 --> 00:00:08,367\nWizard: Magic is never late.\n\n5\n00:00:08,867 --> 00:00:11,004\nWitch: But curses are early!\n\n6\n00:00:11,504 --> 00:00:13,801\nRobot: Logic error detected.\n\n7\n00:00:14,301 --> 00:00:16,758\nGhost: I am watching you all...\n"
-            ],
-            "color": "#223",
-            "bgcolor": "#335"
-        },
-        {
-            "id": 101,
-            "type": "SaveAudio",
-            "pos": [
-                1526.6705204081404,
-                -91.7587772127775
-            ],
-            "size": [
-                300,
-                112
-            ],
-            "flags": {},
-            "order": 10,
-            "mode": 0,
-            "inputs": [
-                {
-                    "name": "audio",
-                    "type": "AUDIO",
-                    "link": 101
-                }
-            ],
-            "outputs": [],
-            "title": "Save Audio (FLAC) 所有人音频",
-            "properties": {
-                "cnr_id": "comfy-core",
-                "ver": "0.9.2",
-                "Node name for S&R": "SaveAudio",
-                "ue_properties": {
-                    "widget_ue_connectable": {},
-                    "version": "7.5.2",
-                    "input_ue_unconnectable": {}
-                }
-            },
-            "widgets_values": [
-                "full_studio_mix"
-            ]
-        },
-        {
-            "id": 201,
-            "type": "SaveAudio",
-            "pos": [
-                1520.8649476388891,
-                125.8624652907926
-            ],
-            "size": [
-                300,
-                112
-            ],
-            "flags": {},
-            "order": 11,
-            "mode": 0,
-            "inputs": [
-                {
-                    "name": "audio",
-                    "type": "AUDIO",
-                    "link": 63
-                }
-            ],
-            "outputs": [],
-            "title": "Save Audio (FLAC) 角色A单轨道",
-            "properties": {
-                "cnr_id": "comfy-core",
-                "ver": "0.9.2",
-                "Node name for S&R": "SaveAudio",
-                "ue_properties": {
-                    "widget_ue_connectable": {},
-                    "version": "7.5.2",
-                    "input_ue_unconnectable": {}
-                }
-            },
-            "widgets_values": [
-                "full_studio_mix"
-            ]
-        },
-        {
-            "id": 2,
-            "type": "Qwen3TTSLoader",
-            "pos": [
-                370.87270932404346,
-                -238.98123448778642
-            ],
-            "size": [
-                300,
-                106
-            ],
-            "flags": {},
-            "order": 3,
-            "mode": 0,
-            "inputs": [],
-            "outputs": [
-                {
-                    "name": "model",
-                    "type": "QWEN3_TTS_MODEL",
-                    "links": [
-                        2,
-                        61
-                    ]
-                }
-            ],
-            "properties": {
-                "cnr_id": "comfyui-kaola-qwen-tts",
-                "ver": "db38a8a82b4d9a895053e5ddbd4b45c147ac33bd",
-                "Node name for S&R": "Qwen3TTSLoader",
-                "ue_properties": {
-                    "widget_ue_connectable": {},
-                    "version": "7.5.2",
-                    "input_ue_unconnectable": {}
-                }
-            },
-            "widgets_values": [
-                "Qwen/Qwen3-TTS-12Hz-1.7B-Base",
-                "bf16",
-                "auto"
-            ]
-        },
-        {
-            "id": 1,
-            "type": "Qwen3TTSLoader",
-            "pos": [
-                -27.587285459873513,
-                -229.1801391218753
-            ],
-            "size": [
-                300,
-                106
-            ],
-            "flags": {},
-            "order": 4,
-            "mode": 0,
-            "inputs": [],
-            "outputs": [
-                {
-                    "name": "model",
-                    "type": "QWEN3_TTS_MODEL",
-                    "links": [
-                        1,
-                        11,
-                        21,
-                        31,
-                        41,
-                        51
-                    ]
-                }
-            ],
-            "properties": {
-                "cnr_id": "comfyui-kaola-qwen-tts",
-                "ver": "db38a8a82b4d9a895053e5ddbd4b45c147ac33bd",
-                "Node name for S&R": "Qwen3TTSLoader",
-                "ue_properties": {
-                    "widget_ue_connectable": {},
-                    "version": "7.5.2",
-                    "input_ue_unconnectable": {}
-                }
-            },
-            "widgets_values": [
-                "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
-                "bf16",
-                "auto"
+                true,
+                "stage_manager",
+                "Chinese",
+                1024,
+                50,
+                true
             ]
         }
     ],
     "links": [
         [
-            11,
-            1,
-            0,
-            10,
-            0,
-            "QWEN3_TTS_MODEL"
-        ],
-        [
-            12,
-            10,
-            0,
-            100,
-            1,
-            "AUDIO"
-        ],
-        [
-            21,
-            1,
-            0,
-            20,
-            0,
-            "QWEN3_TTS_MODEL"
-        ],
-        [
-            22,
-            20,
-            0,
-            100,
-            2,
-            "AUDIO"
-        ],
-        [
-            31,
-            1,
-            0,
-            40,
-            0,
-            "QWEN3_TTS_MODEL"
-        ],
-        [
-            32,
-            30,
-            0,
-            100,
-            3,
-            "AUDIO"
-        ],
-        [
-            41,
-            1,
-            0,
-            50,
-            0,
-            "QWEN3_TTS_MODEL"
-        ],
-        [
-            42,
-            40,
-            0,
-            100,
-            4,
-            "AUDIO"
-        ],
-        [
-            51,
-            1,
-            0,
-            50,
-            0,
-            "QWEN3_TTS_MODEL"
-        ],
-        [
-            52,
-            50,
-            0,
-            100,
-            5,
-            "AUDIO"
-        ],
-        [
-            72,
-            70,
-            0,
-            100,
-            7,
-            "AUDIO"
-        ],
-        [
-            101,
-            100,
-            0,
-            101,
-            0,
-            "AUDIO"
-        ],
-        [
             102,
-            100,
-            8,
-            102,
+            229,
             0,
-            "STRING"
+            230,
+            0,
+            "AUDIO"
         ],
         [
             61,
@@ -850,19 +1411,251 @@
             "STRING"
         ],
         [
-            65,
-            60,
+            70,
+            205,
+            0,
+            100,
+            1,
+            "AUDIO"
+        ],
+        [
+            78,
+            205,
+            0,
+            100,
+            1,
+            "AUDIO"
+        ],
+        [
+            87,
+            216,
+            0,
+            217,
+            0,
+            "QWEN3_TTS_MODEL"
+        ],
+        [
+            88,
+            217,
+            0,
+            214,
+            0,
+            "AUDIO"
+        ],
+        [
+            89,
+            217,
+            0,
+            215,
+            0,
+            "AUDIO"
+        ],
+        [
+            90,
+            216,
+            0,
+            218,
+            0,
+            "QWEN3_TTS_MODEL"
+        ],
+        [
+            91,
+            218,
+            0,
+            219,
+            0,
+            "AUDIO"
+        ],
+        [
+            92,
+            218,
+            0,
+            211,
+            0,
+            "AUDIO"
+        ],
+        [
+            93,
+            100,
+            2,
+            220,
+            0,
+            "AUDIO"
+        ],
+        [
+            94,
+            100,
+            3,
+            221,
+            0,
+            "AUDIO"
+        ],
+        [
+            96,
+            211,
+            0,
+            100,
+            3,
+            "AUDIO"
+        ],
+        [
+            97,
+            214,
+            0,
+            100,
+            2,
+            "AUDIO"
+        ],
+        [
+            98,
+            223,
+            0,
+            224,
+            0,
+            "AUDIO"
+        ],
+        [
+            99,
+            223,
+            0,
+            225,
+            0,
+            "AUDIO"
+        ],
+        [
+            100,
+            226,
+            0,
+            227,
+            0,
+            "AUDIO"
+        ],
+        [
+            103,
+            229,
+            0,
+            231,
+            0,
+            "AUDIO"
+        ],
+        [
+            104,
+            216,
+            0,
+            223,
+            0,
+            "QWEN3_TTS_MODEL"
+        ],
+        [
+            105,
+            216,
+            0,
+            226,
+            0,
+            "QWEN3_TTS_MODEL"
+        ],
+        [
+            106,
+            216,
+            0,
+            229,
+            0,
+            "QWEN3_TTS_MODEL"
+        ],
+        [
+            107,
+            224,
+            0,
+            100,
+            4,
+            "AUDIO"
+        ],
+        [
+            108,
+            227,
+            0,
+            100,
+            5,
+            "AUDIO"
+        ],
+        [
+            109,
+            230,
             0,
             100,
             6,
             "AUDIO"
         ],
         [
-            66,
-            10,
+            110,
+            232,
+            0,
+            233,
+            0,
+            "AUDIO"
+        ],
+        [
+            111,
+            232,
+            0,
+            234,
+            0,
+            "AUDIO"
+        ],
+        [
+            112,
+            234,
             0,
             100,
-            1,
+            7,
+            "AUDIO"
+        ],
+        [
+            113,
+            100,
+            0,
+            101,
+            0,
+            "AUDIO"
+        ],
+        [
+            114,
+            216,
+            0,
+            232,
+            0,
+            "QWEN3_TTS_MODEL"
+        ],
+        [
+            115,
+            226,
+            0,
+            228,
+            0,
+            "AUDIO"
+        ],
+        [
+            116,
+            235,
+            0,
+            222,
+            0,
+            "AUDIO"
+        ],
+        [
+            117,
+            216,
+            0,
+            235,
+            0,
+            "QWEN3_TTS_MODEL"
+        ],
+        [
+            118,
+            235,
+            0,
+            205,
+            0,
             "AUDIO"
         ]
     ],
@@ -872,14 +1665,14 @@
         "workflowRendererVersion": "LG",
         "ue_links": [],
         "ds": {
-            "scale": 1.0826861608874896,
+            "scale": 0.9646149645000047,
             "offset": [
-                150.24253414404288,
-                471.8154514235211
+                -203.3192137543786,
+                300.87596379171737
             ]
         },
         "links_added_by_ue": [],
-        "frontendVersion": "1.36.14",
+        "frontendVersion": "1.37.11",
         "VHS_latentpreview": false,
         "VHS_latentpreviewrate": 0,
         "VHS_MetadataImage": true,
