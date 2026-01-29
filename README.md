@@ -79,5 +79,7 @@ ComfyUI/models/qwen3_tts/
 
 1.  `examples/qwen3_tts_example_workflow.json`：包含基础功能的示例。
 2.  `examples/qwen3_tts_design_then_clone.json`：进阶示例，展示如何先设计声音再进行克隆。
+3.  `examples/qwen3_tts_full_studio.json`：**Stage Manager 全功能示例**，支持多角色对话、剧本解析、声音克隆与设计混合编排。
+
 
 您可以直接将 JSON 文件拖入 ComfyUI 界面即可加载。
