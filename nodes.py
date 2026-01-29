@@ -334,6 +334,13 @@ class Qwen3TTSStageManager:
                 "role_E_audio": ("AUDIO",),
                 "role_F_audio": ("AUDIO",),
                 "role_G_audio": ("AUDIO",),
+                "language": (
+                    ["Auto", "Chinese", "English", "Japanese", "Korean", "German", "French", "Russian", "Portuguese", "Spanish", "Italian"],
+                    {"default": "Auto"}
+                ),
+                "max_new_tokens": ("INT", {"default": 2048, "min": 1, "max": 8192}),
+                "top_k": ("INT", {"default": 50, "min": 1, "max": 100}),
+                "enable_text_normalization": ("BOOLEAN", {"default": True}),
             }
         }
     
@@ -346,7 +353,8 @@ class Qwen3TTSStageManager:
                        top_p=1.0, temperature=0.7, repetition_penalty=1.05, seed=0,
                        save_to_file=False, filename_prefix="stage_manager", 
                        role_A_audio=None, role_B_audio=None, role_C_audio=None, 
-                       role_D_audio=None, role_E_audio=None, role_F_audio=None, role_G_audio=None):
+                       role_D_audio=None, role_E_audio=None, role_F_audio=None, role_G_audio=None,
+                       language="Auto", max_new_tokens=2048, top_k=50, enable_text_normalization=True):
         
         # Validation checks
         if model is None:
@@ -534,6 +542,11 @@ class Qwen3TTSStageManager:
                 if w_np.shape[0] < w_np.shape[1]: w_np = np.mean(w_np, axis=0)
                 else: w_np = np.mean(w_np, axis=1)
             if w_np.ndim > 1: w_np = w_np.flatten()
+            
+            if w_np.shape[0] < 400:
+                print(f"ERROR: Reference audio for {audio_data.get('role', 'unknown')} is too short: {w_np.shape[0]} samples.")
+                raise ValueError(f"StageManager: Reference audio is too short (<400 samples).")
+
             return (w_np, sr)
 
         cursor_time = 0.0 # Tracks the end of the last generate clip for auto-placement
@@ -595,6 +608,7 @@ class Qwen3TTSStageManager:
             ref_audio_obj = None
             ref_text_obj = None
             x_vector = True
+            target_lang = None if language == "Auto" else language
             
             if role_data.get("audio_input") is not None:
                 is_clone_mode = True
@@ -622,9 +636,10 @@ class Qwen3TTSStageManager:
             output_sr = 24000
             
             if is_clone_mode:
+            if is_clone_mode:
                 wavs, output_sr = voice_clone_worker.generate_voice_clone(
                     text=content,
-                    language="Auto",
+                    language=target_lang,
                     ref_audio=ref_audio_obj,
                     ref_text=ref_text_obj,
                     x_vector_only_mode=x_vector,
@@ -632,23 +647,29 @@ class Qwen3TTSStageManager:
                     top_p=top_p,
                     temperature=temperature,
                     repetition_penalty=repetition_penalty,
+                    max_new_tokens=max_new_tokens,
+                    top_k=top_k,
+                    enable_text_normalization=enable_text_normalization,
                 )
             else:
                 instruct = role_data["desc"]
                 wavs, output_sr = model.generate_voice_design(
                     text=content,
-                    language="Auto",
+                    language=target_lang,
                     instruct=instruct,
                     do_sample=True,
                     top_p=top_p,
                     temperature=temperature,
                     repetition_penalty=repetition_penalty,
+                    max_new_tokens=max_new_tokens,
+                    top_k=top_k,
+                    enable_text_normalization=enable_text_normalization,
                 )
             
             if not wavs: 
                 print(f"DEBUG: Generation failed/empty for line {i}")
                 continue
-            print(f"DEBUG: Generated {len(wavs)} wav segments.")
+            print(f"DEBUG: Generated {len(wavs)} wav segments. Generation finished for line {valid_line_count+1}.")
             sample_rate = output_sr
             
             # Convert to Tensor
