@@ -486,12 +486,11 @@ class Qwen3TTSStageManager:
                 missing_roles.append(r)
         
         if missing_roles:
-            print(f"\n{'!'*40}")
-            print(f"WARNING: The following roles appear in the script but are NOT defined in Role Definitions:")
+            err_msg = "The following roles appear in the script but are NOT defined in Role Definitions:\n"
             for mr in missing_roles:
-                print(f"  - '{mr}'")
-            print(f"Please add them to the 'Role Definitions' text box (e.g. {missing_roles[0]} [A]: description)")
-            print(f"{'!'*40}\n")
+                err_msg += f"  - '{mr}'\n"
+            err_msg += "Please add them to the 'Role Definitions' text box (e.g. speakerUnknown [A]: description)"
+            raise ValueError(f"StageManager Error:\n{err_msg}")
         else:
             print(f"DEBUG: All script roles are defined: {list(found_script_roles)}")
         # ----------------------------------
@@ -666,7 +665,8 @@ class Qwen3TTSStageManager:
                 )
             
             if not wavs: 
-                print(f"DEBUG: Generation failed/empty for line {i}")
+                print(f"DEBUG: Generation failed/empty for line {i}. Content='{content}'.")
+                print("       (Note: TTS models often fail on text that is purely in brackets [] or consist only of sound effects.)")
                 continue
             print(f"DEBUG: Generated {len(wavs)} wav segments. Generation finished for line {valid_line_count+1}.")
             sample_rate = output_sr
