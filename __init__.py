@@ -1,4 +1,4 @@
-from .nodes import Qwen3TTSLoader, Qwen3TTSCustomVoice, Qwen3TTSVoiceDesign, Qwen3TTSVoiceClone, Qwen3TTSStageManager, Qwen3TTSRefAudio
+from .nodes import Qwen3TTSLoader, Qwen3TTSCustomVoice, Qwen3TTSVoiceDesign, Qwen3TTSVoiceClone, Qwen3TTSStageManager, Qwen3TTSRefAudio, Qwen3TTSSaveFile
 
 NODE_CLASS_MAPPINGS = {
     "Qwen3TTSLoader": Qwen3TTSLoader,

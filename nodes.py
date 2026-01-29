@@ -715,6 +715,43 @@ class Qwen3TTSStageManager:
             srt_output,
         )
 
+class Qwen3TTSSaveFile:
+    @classmethod
+    def INPUT_TYPES(s):
+        return {
+            "required": {
+                "text": ("STRING", {"multiline": True, "default": ""}),
+                "filename_prefix": ("STRING", {"default": "vibe_output"}),
+                "extension": (["srt", "txt", "csv", "json"], {"default": "srt"}),
+            }
+        }
+    
+    RETURN_TYPES = ("STRING",)
+    RETURN_NAMES = ("text_content",)
+    FUNCTION = "save_file"
+    CATEGORY = "Qwen3TTS"
+    
+    def save_file(self, text, filename_prefix="vibe_output", extension="srt"):
+        output_dir = folder_paths.get_output_directory()
+        # Handle filename conflicts
+        def get_unique_filename(directory, prefix, ext):
+            counter = 1
+            filename = f"{prefix}.{ext}"
+            while os.path.exists(os.path.join(directory, filename)):
+                filename = f"{prefix}_{counter}.{ext}"
+                counter += 1
+            return filename
+
+        filename = get_unique_filename(output_dir, filename_prefix, extension)
+        full_path = os.path.join(output_dir, filename)
+        
+        print(f"Saving text to {full_path}")
+        
+        with open(full_path, "w", encoding="utf-8") as f:
+            f.write(text)
+            
+        return (text,)
+
 NODE_CLASS_MAPPINGS = {
     "Qwen3TTSLoader": Qwen3TTSLoader,
     "Qwen3TTSCustomVoice": Qwen3TTSCustomVoice,
@@ -722,6 +759,7 @@ NODE_CLASS_MAPPINGS = {
     "Qwen3TTSVoiceClone": Qwen3TTSVoiceClone,
     "Qwen3TTSStageManager": Qwen3TTSStageManager,
     "Qwen3TTSRefAudio": Qwen3TTSRefAudio,
+    "Qwen3TTSSaveFile": Qwen3TTSSaveFile,
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
@@ -731,4 +769,5 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "Qwen3TTSVoiceClone": "Voice Clone",
     "Qwen3TTSStageManager": "Stage Manager 🎬",
     "Qwen3TTSRefAudio": "Ref Audio (Audio+Text)",
+    "Qwen3TTSSaveFile": "VibeVoice Save File",
 }
