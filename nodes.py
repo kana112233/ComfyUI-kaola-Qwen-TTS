@@ -7,6 +7,7 @@ from qwen_tts import Qwen3TTSModel
 import re
 import torchaudio
 import soundfile as sf
+import comfy.utils
 
 # Add Qwen3-TTS related paths
 folder_paths.add_model_folder_path("qwen3_tts", os.path.join(folder_paths.models_dir, "qwen3_tts"))
@@ -472,7 +473,9 @@ class Qwen3TTSStageManager:
         valid_line_count = 0
         last_valid_role = None
 
+        pbar = comfy.utils.ProgressBar(len(script_lines))
         for i, line in enumerate(script_lines):
+            pbar.update(1)
             print(f"DEBUG: Processing Line {i+1}/{len(script_lines)}: {line[:30]}...")
             
             # Deterministic seeding per line
