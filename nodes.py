@@ -433,21 +433,18 @@ class Qwen3TTSStageManager:
         script_lines = script.strip().split('\n')
         print(f"DEBUG: Parsed {len(script_lines)} lines from script.")
 
-        # Dynamic Timelines
-        timelines = {}
-        for r_name in roles_config:
-            timelines[r_name] = []
-            
         sample_rate = 24000 
         srt_lines = []
-        current_time_seconds = 0.0
         
-        # Regex 1: Explicit Timestamp + Speaker format (e.g. "1 00:00:01,000 --> 00:00:05,000 Speaker: Content")
-        # Matches: (Seq) (Start) --> (End) (Speaker): (Content)
+        # Absolute Timing Layout Engine
+        # events: list of match objects or dicts {start_time, end_time (optional), role, content}
+        timeline_events = [] 
+        
+        # Regex 1: Explicit Timestamp + Speaker format
         # Relaxed pattern to allow flexible spacing
         ts_pattern = re.compile(r"^(\d+)\s+([0-9:,\.]+)\s*-{2,}>\s*([0-9:,\.]+)\s+(.+?)[:：]\s*(.+)$")
 
-        # Regex 2: Standard Name: Content (Supports : or ：)
+        # Regex 2: Standard Name: Content
         # Avoid matching timestamp partials by requiring name to not be just digits/timestamps
         pattern = re.compile(r"^([^0-9\s].*?)[:：]\s*(.+)$")
         
@@ -472,10 +469,8 @@ class Qwen3TTSStageManager:
         def get_tensor_props(t):
             return t.shape[1], t.shape[2] 
         
-        # Prepare Audio for Cloning
         def process_ref_audio(audio_data):
             # Returns tuple (numpy_wave, sr) suitable for Qwen
-            # audio_data is users dictionary {"waveform":..., "sample_rate":...}
             waveform = audio_data["waveform"]
             sr = audio_data["sample_rate"]
             w_np = waveform.cpu().numpy()
@@ -486,15 +481,16 @@ class Qwen3TTSStageManager:
             if w_np.ndim > 1: w_np = w_np.flatten()
             return (w_np, sr)
 
+        cursor_time = 0.0 # Tracks the end of the last generate clip for auto-placement
+        
+        # Collection Phase
         valid_line_count = 0
         last_valid_role = None
 
         pbar = comfy.utils.ProgressBar(len(script_lines))
         for i, line in enumerate(script_lines):
             pbar.update(1)
-            # print(f"DEBUG: Processing Line {i+1}/{len(script_lines)}: {line[:30]}...")
             
-            # Deterministic seeding per line
             if seed is not None:
                 line_seed = seed + i
                 torch.manual_seed(line_seed)
@@ -502,7 +498,6 @@ class Qwen3TTSStageManager:
             line = line.strip()
             if not line: continue
             
-            # Try matching Timestamp format first
             match_ts = ts_pattern.match(line)
             match_std = pattern.match(line)
             
@@ -511,7 +506,6 @@ class Qwen3TTSStageManager:
             explicit_start_time = None
             
             if match_ts:
-                # Group 1: Seq, 2: Start, 3: End, 4: Speaker, 5: Content
                 explicit_start_time = parse_timestamp_to_seconds(match_ts.group(2))
                 role_name = match_ts.group(4).strip()
                 content = match_ts.group(5).strip()
@@ -519,7 +513,6 @@ class Qwen3TTSStageManager:
                 print(f"Line {i}: Found explicit timestamp {match_ts.group(2)} ({explicit_start_time}s)")
                 
             elif match_std:
-                # Standard format
                 role_name = match_std.group(1).strip()
                 content = match_std.group(2).strip()
                 last_valid_role = role_name
@@ -527,9 +520,7 @@ class Qwen3TTSStageManager:
                 if last_valid_role:
                     role_name = last_valid_role
                     content = line
-                    # print(f"DEBUG: Auto-assigned line to previous role: {role_name}")
                 else: 
-                    # print(f"DEBUG: Regex failed match and no previous role: {line}")
                     continue
                 
             active_role_key = None
@@ -544,69 +535,36 @@ class Qwen3TTSStageManager:
                 
             role_data = roles_config[active_role_key]
             
-            # Timestamp Synchronization Logic
-            # If explicit start time is provided, insert silence to align everyone to that time
-            if explicit_start_time is not None:
-                time_gap = explicit_start_time - current_time_seconds
-                if time_gap > 0.01: # Add silence
-                     silence_samples = int(time_gap * sample_rate)
-                     silence_gap = torch.zeros((1, 1, silence_samples), dtype=torch.float32)
-                     # Apply silence to ALL tracks to advance time
-                     for tl in timelines.values():
-                         # Ensure correct channels. Usually 1.
-                         tl.append(silence_gap)
-                     current_time_seconds = explicit_start_time
-                elif time_gap < -0.1:
-                    print(f"WARNING: Line {i} starts at {explicit_start_time}s but current time is {current_time_seconds}s. Audio overlap might occur or time is ignored.")
-                    # We continue appending, effectively pushing the timestamp later than requested.
-            
-            # Determine Mode: Clone vs Design
-            # Clone if: Audio Input Present OR Description is File Path
+            # Determine Mode
             is_clone_mode = False
             ref_audio_obj = None
+            ref_text_obj = None
+            x_vector = True
             
             if role_data.get("audio_input") is not None:
                 is_clone_mode = True
                 audio_input_data = role_data["audio_input"]
                 ref_audio_obj = process_ref_audio(audio_input_data)
-                
-                # Check for bundled text (from Qwen3TTSRefAudio node)
                 if "text" in audio_input_data and audio_input_data["text"]:
                     ref_text_obj = audio_input_data["text"]
                     x_vector = False
-                    # print(f"Role {role_name}: Found ref_text in Audio input. Using ICL Mode.")
-                else:
-                    ref_text_obj = None
-                    x_vector = True
-                    # print(f"Role {role_name}: No ref_text in Audio input. Using X-Vector Mode.")
-                    
             elif role_data.get("is_file", False):
                 is_clone_mode = True
-                # Load from file
                 fpath = role_data["desc"].strip('"').strip("'")
                 try:
                     w, sr = torchaudio.load(fpath)
-                    # Convert to Qwen format
                     w_np = w.numpy()
                     if w_np.ndim == 2: w_np = np.mean(w_np, axis=0)
                     ref_audio_obj = (w_np, sr)
-                    
-                    # File loading doesn't support text yet
-                    ref_text_obj = None
-                    x_vector = True 
-
                 except Exception as e:
                     print(f"Failed to load audio file {fpath}: {e}. Falling back to Design.")
                     is_clone_mode = False
             
-            # Generation
+            # Generate Audio
             wavs = []
             output_sr = 24000
             
-            # print(f"Generating Line {valid_line_count+1}: {role_name} -> {content[:30]}...")
-
             if is_clone_mode:
-                # Use voice_clone_worker (model)
                 wavs, output_sr = voice_clone_worker.generate_voice_clone(
                     text=content,
                     language="Auto",
@@ -619,9 +577,7 @@ class Qwen3TTSStageManager:
                     repetition_penalty=repetition_penalty,
                 )
             else:
-                # Design Mode
                 instruct = role_data["desc"]
-                
                 wavs, output_sr = model.generate_voice_design(
                     text=content,
                     language="Auto",
@@ -633,10 +589,9 @@ class Qwen3TTSStageManager:
                 )
             
             if not wavs: continue
-            
             sample_rate = output_sr
             
-            # Process Output
+            # Convert to Tensor
             w = wavs[0]
             t = torch.from_numpy(w)
             if t.ndim == 1: t = t.unsqueeze(0)
@@ -646,85 +601,94 @@ class Qwen3TTSStageManager:
             channels, audio_samples = get_tensor_props(t)
             duration_seconds = audio_samples / sample_rate
             
-            # Update SRT
-            valid_line_count += 1
-            start_time = current_time_seconds
-            end_time = start_time + duration_seconds
-            srt_lines.append(f"{valid_line_count}\n{format_timestamp(start_time)} --> {format_timestamp(end_time)}\n{role_name}: {content}\n")
-            
-            # Update Timelines
-            # Add audio to active role, silence to ALL others
-            for r_key, tl in timelines.items():
-                if r_key == active_role_key:
-                    tl.append(t)
-                else:
-                    silence = torch.zeros((1, channels, audio_samples), dtype=torch.float32)
-                    tl.append(silence)
-
-            current_time_seconds += duration_seconds
-            
-            # Interval Silence (Only if NO explicitly scheduled timestamp was used for this line)
-            # If explicit timestamp was used, we assume the next line will also have one or we just flow naturally.
-            # Adding interval after explicit timestamp might drift subsequent auto-lines.
-            # But simpler logic: If explicit_start_time was None, add interval.
-            if explicit_start_time is None and my_turn_interval > 0:
-                silence_samples = int(my_turn_interval * sample_rate)
-                silence_gap = torch.zeros((1, channels, silence_samples), dtype=torch.float32)
-                for tl in timelines.values():
-                    tl.append(silence_gap)
-                current_time_seconds += my_turn_interval
-
-        # Finalize Outputs
-        # Cat timelines
-        raw_outputs = {} # role_key -> tensor full
-        
-        # Max length align
-        max_len = 0
-        for r_key, tl in timelines.items():
-            if not tl:
-                 # If a defined role never spoke, create dummy silence of 0.1s
-                 dummy = torch.zeros((1, 1, int(sample_rate * 0.1)))
-                 raw_outputs[r_key] = dummy
-                 if dummy.shape[2] > max_len: max_len = dummy.shape[2]
+            # Determine Placement
+            final_start_time = 0.0
+            if explicit_start_time is not None:
+                final_start_time = explicit_start_time
+                # Update cursor to end of this clip for next implicit line
+                cursor_time = final_start_time + duration_seconds
             else:
-                 cat_t = torch.cat(tl, dim=2)
-                 raw_outputs[r_key] = cat_t
-                 if cat_t.shape[2] > max_len: max_len = cat_t.shape[2]
+                # Implicit placement: use cursor (previous end + interval)
+                # Apply interval before starting this implicit line
+                final_start_time = cursor_time + (my_turn_interval if valid_line_count > 0 else 0)
+                cursor_time = final_start_time + duration_seconds
 
-        # Prevent empty mix if absolutely nothing happened
-        if max_len == 0:
-             max_len = int(sample_rate * 0.1) # Minimum safety
-
-
-        # Pad to max_len
-        final_outputs = {}
-        for r_key, t in raw_outputs.items():
-            current_len = t.shape[2]
-            if current_len < max_len:
-                padding = torch.zeros((t.shape[0], t.shape[1], max_len - current_len), dtype=t.dtype)
-                t = torch.cat([t, padding], dim=2)
-            final_outputs[r_key] = t
+            valid_line_count += 1
+            start_time_fmt = format_timestamp(final_start_time)
+            end_time_fmt = format_timestamp(final_start_time + duration_seconds)
+            srt_lines.append(f"{valid_line_count}\n{start_time_fmt} --> {end_time_fmt}\n{role_name}: {content}\n")
             
-        # Mix
-        final_mix = torch.zeros((1, 1, max_len)) # Init accumulator
-        for t in final_outputs.values():
-            if t.shape[1] > final_mix.shape[1]: 
-                final_mix = final_mix.repeat(1, t.shape[1], 1)
-            elif final_mix.shape[1] > t.shape[1]:
-                t = t.repeat(1, final_mix.shape[1], 1)
-            final_mix = final_mix + t
+            # Store Event
+            timeline_events.append({
+                "role": active_role_key,
+                "start_time": final_start_time,
+                "end_time": final_start_time + duration_seconds,
+                "tensor": t,
+                "channels": channels
+            })
 
-        # Map to Static Outputs A-G
-        out_A = torch.zeros((1, 1, max_len))
-        out_B = torch.zeros((1, 1, max_len))
-        out_C = torch.zeros((1, 1, max_len))
-        out_D = torch.zeros((1, 1, max_len))
-        out_E = torch.zeros((1, 1, max_len))
-        out_F = torch.zeros((1, 1, max_len))
-        out_G = torch.zeros((1, 1, max_len))
+        # Layout Phase
+        # 1. Determine Total Duration & Max Channels
+        total_duration = 0.0
+        max_channels = 1
+        for evt in timeline_events:
+            if evt["end_time"] > total_duration:
+                total_duration = evt["end_time"]
+            if evt["channels"] > max_channels:
+                max_channels = evt["channels"]
+        
+        # Add a tiny buffer at end
+        total_duration += 0.5 
+        total_samples = int(total_duration * sample_rate)
+        
+        # 2. Allocate Tracks
+        # role_key -> tensor [1, max_channels, total_samples]
+        track_buffers = {}
+        for r_key in roles_config:
+            track_buffers[r_key] = torch.zeros((1, max_channels, total_samples), dtype=torch.float32)
+            
+        # 3. Paste Events
+        for evt in timeline_events:
+            r_key = evt["role"]
+            t = evt["tensor"]
+            start_sec = evt["start_time"]
+            
+            start_sample = int(start_sec * sample_rate)
+            clip_samples = t.shape[2]
+            clip_channels = t.shape[1]
+            
+            # Channel Promotion check
+            # t is [1, C, L]
+            if clip_channels < max_channels:
+                 # Expand mono to stereo/multi
+                 t = t.repeat(1, max_channels, 1)
+            
+            # Boundary check
+            end_sample = start_sample + clip_samples
+            if end_sample > total_samples:
+                end_sample = total_samples
+                t = t[:, :, :total_samples - start_sample]
+            
+            # Add (mix) into buffer to allow overlaps within same role? 
+            # Usually same role shouldn't overlap self, but using add handles it gracefully.
+            track_buffers[r_key][:, :, start_sample:end_sample] += t
+            
+        # 4. Final Mix
+        final_mix = torch.zeros((1, max_channels, total_samples), dtype=torch.float32)
+        for t in track_buffers.values():
+            final_mix += t
+            
+        # Map to Static Outputs
+        out_A = torch.zeros((1, max_channels, total_samples))
+        out_B = torch.zeros((1, max_channels, total_samples))
+        out_C = torch.zeros((1, max_channels, total_samples))
+        out_D = torch.zeros((1, max_channels, total_samples))
+        out_E = torch.zeros((1, max_channels, total_samples))
+        out_F = torch.zeros((1, max_channels, total_samples))
+        out_G = torch.zeros((1, max_channels, total_samples))
         
         for r_key, r_data in roles_config.items():
-            t = final_outputs.get(r_key)
+            t = track_buffers.get(r_key)
             if t is None: continue
             
             sid = r_data["static_id"]
@@ -739,12 +703,11 @@ class Qwen3TTSStageManager:
         # Save to File if requested
         if save_to_file:
             output_dir = folder_paths.get_output_directory()
-            # Save Mix
+            
             mix_np = final_mix[0].transpose(0, 1).detach().cpu().numpy()
             sf.write(os.path.join(output_dir, f"{filename_prefix}_MIX.wav"), mix_np, sample_rate)
             
-            # Save Roles
-            for r_key, t in final_outputs.items():
+            for r_key, t in track_buffers.items():
                 safe_name = "".join([c for c in r_key if c.isalnum() or c in (' ', '_', '-')]).strip()
                 fname = f"{filename_prefix}_{safe_name}.wav"
                 
@@ -765,6 +728,7 @@ class Qwen3TTSStageManager:
             {"waveform": out_G, "sample_rate": sample_rate},
             srt_output,
         )
+
 
 class Qwen3TTSSaveFile:
     @classmethod
