@@ -366,10 +366,15 @@ class Qwen3TTSStageManager:
             "A": role_A_audio, "B": role_B_audio, "C": role_C_audio,
             "D": role_D_audio, "E": role_E_audio, "F": role_F_audio, "G": role_G_audio
         }
+        for k, v in audio_slots.items():
+            if v is not None:
+                print(f"DEBUG: StageManager received input for Slot {k}")
+
         used_slots = set()
         slot_keys = sorted(list(audio_slots.keys())) # A, B, C, D, E, F, G
 
         # Parse Role Definitions
+        print(f"DEBUG: Parsing Role Definitions:\n{role_definitions}")
         def_lines = role_definitions.strip().split('\n')
         
         # Regex: Name [A]: Desc or Name: Desc
@@ -545,6 +550,7 @@ class Qwen3TTSStageManager:
                 is_clone_mode = True
                 audio_input_data = role_data["audio_input"]
                 ref_audio_obj = process_ref_audio(audio_input_data)
+                print(f"DEBUG: Role {active_role_key} - Using Input Audio. Ref shape: {ref_audio_obj[0].shape}, SR: {ref_audio_obj[1]}")
                 if "text" in audio_input_data and audio_input_data["text"]:
                     ref_text_obj = audio_input_data["text"]
                     x_vector = False
@@ -561,6 +567,7 @@ class Qwen3TTSStageManager:
                     is_clone_mode = False
             
             # Generate Audio
+            print(f"DEBUG: Generating line {valid_line_count+1} for {role_name} (Clone={is_clone_mode})...")
             wavs = []
             output_sr = 24000
             
@@ -588,7 +595,10 @@ class Qwen3TTSStageManager:
                     repetition_penalty=repetition_penalty,
                 )
             
-            if not wavs: continue
+            if not wavs: 
+                print(f"DEBUG: Generation failed/empty for line {i}")
+                continue
+            print(f"DEBUG: Generated {len(wavs)} wav segments.")
             sample_rate = output_sr
             
             # Convert to Tensor
