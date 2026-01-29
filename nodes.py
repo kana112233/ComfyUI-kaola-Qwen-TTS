@@ -444,10 +444,12 @@ class Qwen3TTSStageManager:
         
         # Regex 1: Explicit Timestamp + Speaker format (e.g. "1 00:00:01,000 --> 00:00:05,000 Speaker: Content")
         # Matches: (Seq) (Start) --> (End) (Speaker): (Content)
-        ts_pattern = re.compile(r"^(\d+)\s+([0-9:,]+)\s+-->\s+([0-9:,]+)\s+(.+?)[:：]\s*(.+)$")
+        # Relaxed pattern to allow flexible spacing
+        ts_pattern = re.compile(r"^(\d+)\s+([0-9:,\.]+)\s*-{2,}>\s*([0-9:,\.]+)\s+(.+?)[:：]\s*(.+)$")
 
         # Regex 2: Standard Name: Content (Supports : or ：)
-        pattern = re.compile(r"^(.+?)[:：]\s*(.+)$")
+        # Avoid matching timestamp partials by requiring name to not be just digits/timestamps
+        pattern = re.compile(r"^([^0-9\s].*?)[:：]\s*(.+)$")
         
         def parse_timestamp_to_seconds(ts_str):
             # Format: HH:MM:SS,mmm
@@ -683,10 +685,16 @@ class Qwen3TTSStageManager:
                  # If a defined role never spoke, create dummy silence of 0.1s
                  dummy = torch.zeros((1, 1, int(sample_rate * 0.1)))
                  raw_outputs[r_key] = dummy
+                 if dummy.shape[2] > max_len: max_len = dummy.shape[2]
             else:
                  cat_t = torch.cat(tl, dim=2)
                  raw_outputs[r_key] = cat_t
                  if cat_t.shape[2] > max_len: max_len = cat_t.shape[2]
+
+        # Prevent empty mix if absolutely nothing happened
+        if max_len == 0:
+             max_len = int(sample_rate * 0.1) # Minimum safety
+
 
         # Pad to max_len
         final_outputs = {}
