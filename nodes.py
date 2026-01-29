@@ -442,9 +442,23 @@ class Qwen3TTSStageManager:
         srt_lines = []
         current_time_seconds = 0.0
         
-        # Regex: Name: Content (Supports : or ：)
+        # Regex 1: Explicit Timestamp + Speaker format (e.g. "1 00:00:01,000 --> 00:00:05,000 Speaker: Content")
+        # Matches: (Seq) (Start) --> (End) (Speaker): (Content)
+        ts_pattern = re.compile(r"^(\d+)\s+([0-9:,]+)\s+-->\s+([0-9:,]+)\s+(.+?)[:：]\s*(.+)$")
+
+        # Regex 2: Standard Name: Content (Supports : or ：)
         pattern = re.compile(r"^(.+?)[:：]\s*(.+)$")
         
+        def parse_timestamp_to_seconds(ts_str):
+            # Format: HH:MM:SS,mmm
+            try:
+                time_part, millis_part = ts_str.split(',')
+                h, m, s = map(int, time_part.split(':'))
+                millis = int(millis_part)
+                return h * 3600 + m * 60 + s + millis / 1000.0
+            except:
+                return 0.0
+
         def format_timestamp(seconds):
             millis = int((seconds % 1) * 1000)
             seconds = int(seconds)
@@ -476,7 +490,7 @@ class Qwen3TTSStageManager:
         pbar = comfy.utils.ProgressBar(len(script_lines))
         for i, line in enumerate(script_lines):
             pbar.update(1)
-            print(f"DEBUG: Processing Line {i+1}/{len(script_lines)}: {line[:30]}...")
+            # print(f"DEBUG: Processing Line {i+1}/{len(script_lines)}: {line[:30]}...")
             
             # Deterministic seeding per line
             if seed is not None:
@@ -486,21 +500,34 @@ class Qwen3TTSStageManager:
             line = line.strip()
             if not line: continue
             
-            match = pattern.match(line)
+            # Try matching Timestamp format first
+            match_ts = ts_pattern.match(line)
+            match_std = pattern.match(line)
+            
             role_name = None
             content = None
-
-            if match:
-                role_name = match.group(1).strip()
-                content = match.group(2).strip()
+            explicit_start_time = None
+            
+            if match_ts:
+                # Group 1: Seq, 2: Start, 3: End, 4: Speaker, 5: Content
+                explicit_start_time = parse_timestamp_to_seconds(match_ts.group(2))
+                role_name = match_ts.group(4).strip()
+                content = match_ts.group(5).strip()
+                last_valid_role = role_name
+                print(f"Line {i}: Found explicit timestamp {match_ts.group(2)} ({explicit_start_time}s)")
+                
+            elif match_std:
+                # Standard format
+                role_name = match_std.group(1).strip()
+                content = match_std.group(2).strip()
                 last_valid_role = role_name
             else:
                 if last_valid_role:
                     role_name = last_valid_role
                     content = line
-                    print(f"DEBUG: Auto-assigned line to previous role: {role_name}")
+                    # print(f"DEBUG: Auto-assigned line to previous role: {role_name}")
                 else: 
-                    print(f"DEBUG: Regex failed match and no previous role: {line}")
+                    # print(f"DEBUG: Regex failed match and no previous role: {line}")
                     continue
                 
             active_role_key = None
@@ -514,6 +541,22 @@ class Qwen3TTSStageManager:
                 continue
                 
             role_data = roles_config[active_role_key]
+            
+            # Timestamp Synchronization Logic
+            # If explicit start time is provided, insert silence to align everyone to that time
+            if explicit_start_time is not None:
+                time_gap = explicit_start_time - current_time_seconds
+                if time_gap > 0.01: # Add silence
+                     silence_samples = int(time_gap * sample_rate)
+                     silence_gap = torch.zeros((1, 1, silence_samples), dtype=torch.float32)
+                     # Apply silence to ALL tracks to advance time
+                     for tl in timelines.values():
+                         # Ensure correct channels. Usually 1.
+                         tl.append(silence_gap)
+                     current_time_seconds = explicit_start_time
+                elif time_gap < -0.1:
+                    print(f"WARNING: Line {i} starts at {explicit_start_time}s but current time is {current_time_seconds}s. Audio overlap might occur or time is ignored.")
+                    # We continue appending, effectively pushing the timestamp later than requested.
             
             # Determine Mode: Clone vs Design
             # Clone if: Audio Input Present OR Description is File Path
@@ -529,11 +572,11 @@ class Qwen3TTSStageManager:
                 if "text" in audio_input_data and audio_input_data["text"]:
                     ref_text_obj = audio_input_data["text"]
                     x_vector = False
-                    print(f"Role {role_name}: Found ref_text in Audio input. Using ICL Mode.")
+                    # print(f"Role {role_name}: Found ref_text in Audio input. Using ICL Mode.")
                 else:
                     ref_text_obj = None
                     x_vector = True
-                    print(f"Role {role_name}: No ref_text in Audio input. Using X-Vector Mode.")
+                    # print(f"Role {role_name}: No ref_text in Audio input. Using X-Vector Mode.")
                     
             elif role_data.get("is_file", False):
                 is_clone_mode = True
@@ -558,8 +601,9 @@ class Qwen3TTSStageManager:
             wavs = []
             output_sr = 24000
             
+            # print(f"Generating Line {valid_line_count+1}: {role_name} -> {content[:30]}...")
+
             if is_clone_mode:
-                print(f"Generating Line {valid_line_count+1} [CLONE]: {role_name}")
                 # Use voice_clone_worker (model)
                 wavs, output_sr = voice_clone_worker.generate_voice_clone(
                     text=content,
@@ -574,7 +618,6 @@ class Qwen3TTSStageManager:
                 )
             else:
                 # Design Mode
-                print(f"Generating Line {valid_line_count+1} [DESIGN]: {role_name}")
                 instruct = role_data["desc"]
                 
                 wavs, output_sr = model.generate_voice_design(
@@ -618,8 +661,11 @@ class Qwen3TTSStageManager:
 
             current_time_seconds += duration_seconds
             
-            # Interval Silence
-            if my_turn_interval > 0:
+            # Interval Silence (Only if NO explicitly scheduled timestamp was used for this line)
+            # If explicit timestamp was used, we assume the next line will also have one or we just flow naturally.
+            # Adding interval after explicit timestamp might drift subsequent auto-lines.
+            # But simpler logic: If explicit_start_time was None, add interval.
+            if explicit_start_time is None and my_turn_interval > 0:
                 silence_samples = int(my_turn_interval * sample_rate)
                 silence_gap = torch.zeros((1, channels, silence_samples), dtype=torch.float32)
                 for tl in timelines.values():
@@ -686,8 +732,6 @@ class Qwen3TTSStageManager:
         if save_to_file:
             output_dir = folder_paths.get_output_directory()
             # Save Mix
-            # torchaudio.save(os.path.join(output_dir, f"{filename_prefix}_MIX.wav"), final_mix[0], sample_rate)
-            # Use soundfile to avoid libtorchcodec issues
             mix_np = final_mix[0].transpose(0, 1).detach().cpu().numpy()
             sf.write(os.path.join(output_dir, f"{filename_prefix}_MIX.wav"), mix_np, sample_rate)
             
@@ -695,7 +739,6 @@ class Qwen3TTSStageManager:
             for r_key, t in final_outputs.items():
                 safe_name = "".join([c for c in r_key if c.isalnum() or c in (' ', '_', '-')]).strip()
                 fname = f"{filename_prefix}_{safe_name}.wav"
-                # torchaudio.save(os.path.join(output_dir, fname), t[0], sample_rate)
                 
                 role_np = t[0].transpose(0, 1).detach().cpu().numpy()
                 sf.write(os.path.join(output_dir, fname), role_np, sample_rate)
