@@ -636,7 +636,6 @@ class Qwen3TTSStageManager:
             output_sr = 24000
             
             if is_clone_mode:
-            if is_clone_mode:
                 wavs, output_sr = voice_clone_worker.generate_voice_clone(
                     text=content,
                     language=target_lang,
