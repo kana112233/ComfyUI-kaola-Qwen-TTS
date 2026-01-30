@@ -319,6 +319,7 @@ class Qwen3TTSStageManager:
                 "script": ("STRING", {"multiline": True, "default": "Narrator: The adventure begins.\nHero: Let's go!"}),
                 "role_definitions": ("STRING", {"multiline": True, "default": "Narrator [A]: A clear, neutral voice.\nHero [B]: A brave, young voice."}),
                 "my_turn_interval": ("FLOAT", {"default": 0.5, "min": 0.0, "max": 5.0, "step": 0.1}),
+                "overlap_handling": (["ignore", "shift_start", "truncate"], {"default": "ignore"}),
             },
             "optional": {
                 "top_p": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 1.0, "step": 0.01}),
@@ -354,7 +355,8 @@ class Qwen3TTSStageManager:
                        save_to_file=False, filename_prefix="stage_manager", 
                        role_A_audio=None, role_B_audio=None, role_C_audio=None, 
                        role_D_audio=None, role_E_audio=None, role_F_audio=None, role_G_audio=None,
-                       language="Auto", max_new_tokens=2048, top_k=50, enable_text_normalization=True):
+                       language="Auto", max_new_tokens=2048, top_k=50, enable_text_normalization=True,
+                       overlap_handling="ignore"):
         
         # Validation checks
         if model is None:
@@ -571,13 +573,15 @@ class Qwen3TTSStageManager:
             role_name = None
             content = None
             explicit_start_time = None
+            explicit_end_time = None
             
             if match_ts:
                 explicit_start_time = parse_timestamp_to_seconds(match_ts.group(2))
+                explicit_end_time = parse_timestamp_to_seconds(match_ts.group(3))
                 role_name = match_ts.group(4).strip()
                 content = match_ts.group(5).strip()
                 last_valid_role = role_name
-                print(f"Line {i}: Found explicit timestamp {match_ts.group(2)} ({explicit_start_time}s)")
+                print(f"Line {i}: Found explicit timestamp {match_ts.group(2)} ({explicit_start_time}s) -> {match_ts.group(3)} ({explicit_end_time}s)")
                 
             elif match_std:
                 role_name = match_std.group(1).strip()
@@ -683,10 +687,34 @@ class Qwen3TTSStageManager:
             
             # Determine Placement
             final_start_time = 0.0
+            
             if explicit_start_time is not None:
                 final_start_time = explicit_start_time
+                
+                if final_start_time < cursor_time:
+                    if overlap_handling == "shift_start":
+                        # Delay this line to start after previous one finishes
+                        print(f"DEBUG: Shifted start from {final_start_time:.3f} to {cursor_time:.3f} to avoid overlap.")
+                        final_start_time = cursor_time
+                    elif overlap_handling == "truncate":
+                        # Truncate logic handled below using explicit_end_time if available
+                        pass
+
                 # Update cursor to end of this clip for next implicit line
                 cursor_time = final_start_time + duration_seconds
+                
+                # Truncate Logic: Enforce explicit end time if provided
+                if overlap_handling == "truncate" and explicit_end_time is not None:
+                     allowed_duration = explicit_end_time - final_start_time
+                     if duration_seconds > allowed_duration:
+                         print(f"DEBUG: Truncating audio for line {i}: {duration_seconds:.3f}s -> {allowed_duration:.3f}s")
+                         # Slice the tensor
+                         max_samples = int(allowed_duration * sample_rate)
+                         if max_samples < t.shape[2]:
+                             t = t[:, :, :max_samples]
+                             # Update duration and cursor
+                             duration_seconds = allowed_duration
+                             cursor_time = final_start_time + duration_seconds
             else:
                 # Implicit placement: use cursor (previous end + interval)
                 # Apply interval before starting this implicit line
