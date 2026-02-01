@@ -20,6 +20,17 @@ try:
 except ImportError:
     pass
 
+# Monkeypatch transformers.masking_utils for qwen_tts compatibility
+try:
+    import transformers.modeling_attn_mask_utils
+    import sys
+    from types import ModuleType
+    
+    if "transformers.masking_utils" not in sys.modules:
+        sys.modules["transformers.masking_utils"] = transformers.modeling_attn_mask_utils
+except ImportError:
+    pass
+
 from qwen_tts import Qwen3TTSModel
 import re
 import torchaudio
