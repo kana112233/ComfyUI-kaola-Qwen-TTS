@@ -3,34 +3,6 @@ import os
 import torch
 import numpy as np
 import folder_paths
-# Monkeypatch transformers to fix UnboundLocalError in qwen_tts
-try:
-    import transformers.utils.args_doc
-    
-    _original_auto_class_docstring = transformers.utils.args_doc.auto_class_docstring
-
-    def _patched_auto_class_docstring(obj, custom_args=None, custom_intro=None, checkpoint=None):
-        try:
-            return _original_auto_class_docstring(obj, custom_args=custom_args, custom_intro=custom_intro, checkpoint=checkpoint)
-        except UnboundLocalError:
-            # Fix for Qwen3TTSTokenizerV1EncoderOutput not in AutoMappings
-            return obj
-            
-    transformers.utils.args_doc.auto_class_docstring = _patched_auto_class_docstring
-except ImportError:
-    pass
-
-# Monkeypatch transformers.masking_utils for qwen_tts compatibility
-try:
-    import transformers.modeling_attn_mask_utils
-    import sys
-    from types import ModuleType
-    
-    if "transformers.masking_utils" not in sys.modules:
-        sys.modules["transformers.masking_utils"] = transformers.modeling_attn_mask_utils
-except ImportError:
-    pass
-
 from qwen_tts import Qwen3TTSModel
 import re
 import torchaudio
