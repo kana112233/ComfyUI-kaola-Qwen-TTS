@@ -594,14 +594,29 @@ class Qwen3TTSStageManager:
                 else: 
                     continue
                 
+            # Parse inline emotion: Role (Emotion) or Role(Emotion)
+            # Supports () and （）
+            inline_instruct = None
+            
+            # Non-greedy match for name, then optional parens for emotion
+            # We check both English and Chinese parentheses
+            paren_pattern = re.compile(r"^(.+?)\s*[（\(](.+?)[）\)]$")
+            match_paren = paren_pattern.match(role_name)
+            
+            canonical_role_name = role_name
+            if match_paren:
+                canonical_role_name = match_paren.group(1).strip()
+                inline_instruct = match_paren.group(2).strip()
+                # print(f"DEBUG: Parsed inline emotion for line {i}: Name='{canonical_role_name}', Emotion='{inline_instruct}'")
+            
             active_role_key = None
             for r_key in roles_config:
-                if r_key.lower() == role_name.lower():
+                if r_key.lower() == canonical_role_name.lower():
                     active_role_key = r_key
                     break
             
             if not active_role_key:
-                print(f"Role '{role_name}' not defined. Skipping.")
+                print(f"Role '{canonical_role_name}' (raw: '{role_name}') not defined. Skipping.")
                 continue
                 
             role_data = roles_config[active_role_key]
@@ -617,7 +632,7 @@ class Qwen3TTSStageManager:
                 is_clone_mode = True
                 audio_input_data = role_data["audio_input"]
                 ref_audio_obj = process_ref_audio(audio_input_data)
-                print(f"DEBUG: Role {active_role_key} - Using Input Audio. Ref shape: {ref_audio_obj[0].shape}, SR: {ref_audio_obj[1]}")
+                # print(f"DEBUG: Role {active_role_key} - Using Input Audio. Ref shape: {ref_audio_obj[0].shape}, SR: {ref_audio_obj[1]}")
                 if "text" in audio_input_data and audio_input_data["text"]:
                     ref_text_obj = audio_input_data["text"]
                     x_vector = False
@@ -634,11 +649,14 @@ class Qwen3TTSStageManager:
                     is_clone_mode = False
             
             # Generate Audio
-            print(f"DEBUG: Generating line {valid_line_count+1} for {role_name} (Clone={is_clone_mode})...")
+            print(f"DEBUG: Generating line {valid_line_count+1} for {canonical_role_name} (Clone={is_clone_mode})...")
             wavs = []
             output_sr = 24000
             
             if is_clone_mode:
+                # Todo: Check if VoiceClone supports 'instruct' or equivalent in future versions
+                # Currently specific Qwen3-TTS API for clone doesn't always take instruct.
+                # If supported, we could effectively mix clone + design.
                 wavs, output_sr = voice_clone_worker.generate_voice_clone(
                     text=content,
                     language=target_lang,
@@ -654,11 +672,20 @@ class Qwen3TTSStageManager:
                     enable_text_normalization=enable_text_normalization,
                 )
             else:
-                instruct = role_data["desc"]
+                base_instruct = role_data["desc"]
+                final_instruct = base_instruct
+                if inline_instruct:
+                     # Merge instructions
+                     # Ensure separation
+                     if not final_instruct.endswith('.') and not final_instruct.endswith('!') and not final_instruct.endswith('?'):
+                         final_instruct += "."
+                     final_instruct += f" {inline_instruct}"
+                     print(f"DEBUG: Merged Instruct: {final_instruct}")
+                
                 wavs, output_sr = model.generate_voice_design(
                     text=content,
                     language=target_lang,
-                    instruct=instruct,
+                    instruct=final_instruct,
                     do_sample=True,
                     top_p=top_p,
                     temperature=temperature,
